@@ -134,6 +134,10 @@ npm run build
 NODE_ENV=production node dist/index.js
 ```
 
+## Architecture & agent rules
+
+Cursor agents and contributors should follow **`.cursor/rules/AGENTS.md`** and the ADRs in **`.cursor/architecture/`** (starter layout in `007-starter-template-layout.md`).
+
 ## Architecture Principles
 
 This template follows these conventions:
