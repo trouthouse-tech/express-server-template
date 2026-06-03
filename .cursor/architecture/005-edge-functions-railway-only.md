@@ -12,7 +12,7 @@ Supabase Edge Functions must be thin proxies. They are allowed to:
 Supabase Edge Functions must **not**:
 
 - run SQL or Supabase CRUD directly
-- implement domain/business logic
+- implement business logic
 - create managed service clients for app logic
 
 ✅ Correct:
@@ -57,7 +57,7 @@ Deno.serve(async (_req: Request) => {
 });
 ```
 
-**Reasoning:** Edge functions should stay transport-only. Railway owns domain behavior, validation, orchestration, AI calls, and data access.
+**Reasoning:** Edge functions should stay transport-only. Railway owns business logic, validation, orchestration, AI calls, and data access via `src/services/` and `src/data/`.
 
 ## All Business Logic Lives in Railway (Express)
 
@@ -70,10 +70,10 @@ Railway Express server is the execution boundary for application logic:
 
 ✅ Correct:
 ```typescript
-// src/domains/orders/routes/createOrderHandler.ts
+// src/services/orders/routes/create-order-handler.ts
 import type { Request, Response } from "express";
 import { getManagedSupabaseClient } from "../../../services/supabase";
-import { processCreateOrder } from "../processCreateOrder";
+import { processCreateOrder } from "../process-create-order";
 
 /**
  * Create order handler.
@@ -122,12 +122,12 @@ export async function insertOrder(supabase: SupabaseClient, payload: { customerI
 
 ❌ Incorrect:
 ```typescript
-// src/domains/orders/router.ts
+// src/services/orders/router.ts
 router.post("/orders", async (req, res) => {
   // ❌ Router contains business logic
   const discountedTotal = req.body.total * 0.85;
 
-  // ❌ Inline CRUD in domain route
+  // ❌ Inline CRUD in service router
   const { data, error } = await req.supabase
     .from("orders")
     .insert({ ...req.body, total: discountedTotal });
@@ -142,9 +142,10 @@ router.post("/orders", async (req, res) => {
 - Edge function only forwards to Railway endpoint
 - No CRUD in edge functions
 - No business logic in edge functions
-- Domain logic implemented in Railway `processX()` functions
-- CRUD isolated under `src/data/{entity}/` (one function per file)
-- Handlers in `src/domains/{domain}/routes/` with try/catch
+- Business logic in Railway `processX()` under `src/services/{feature}/`
+- CRUD isolated under `src/data/{table}/` (one folder per table, one function per file)
+- Handlers in `src/services/{feature}/routes/` with try/catch
+- No `src/domains/` folder
 - Managed clients fetched once at startup and null-checked before use
 - Routers are thin and exported as `createXRouter(): Router`
 - Status code contract: `200` success, `400` client error, `500` server error

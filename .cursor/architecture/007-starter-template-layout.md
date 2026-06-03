@@ -1,4 +1,4 @@
-# 007 - Starter Template Layout (`src/services/`)
+# 007 - Starter Template Layout
 
 ## Status
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-New repos cloned from **express-server-template** start with a minimal tree under `src/services/` (middleware, health, server startup). Full TroutHouseTech Express apps use `src/domains/` and `src/data/` per [001 – File & domain organization](./001-file-and-domain-organization.md). Agents and contributors need an explicit bridge so early routes do not stay in `services/` forever.
+**express-server-template** ships with cross-cutting code under `src/services/` only. There is no database and no `src/data/` yet. This ADR documents the starter tree and how to add table-backed features **without** introducing `src/domains/`.
 
 ## Decision
 
@@ -15,50 +15,64 @@ New repos cloned from **express-server-template** start with a minimal tree unde
 ```text
 index.ts
 src/services/
-  middleware/     # CORS, JSON, error handling
-  health/         # createHealthRouter()
-  server/         # startServer()
+  middleware/
+  health/
+  server/
 ```
 
-- Routers use the **factory pattern** (`createXRouter(): Router`) even in `services/`.
-- **One function per file**; barrel `index.ts` per folder.
-- `index.ts` mounts routers and calls `setupEarlyMiddleware` / `setupErrorHandling`.
+- Factory routers (`createHealthRouter(): Router`).
+- One function per file; `index.ts` barrel per folder.
 
-### 2) When to add `src/domains/`
+### 2) Adding a feature (HTTP + business logic)
 
-Add a domain folder when a feature has **handlers + business logic** (not just a single health-style route):
+Add a **service** folder — not `domains/`:
 
 ```text
-src/domains/my-feature/
+src/services/users/
   router.ts
   routes/
-    list-handler.ts
-  process-list.ts
+    get-user-handler.ts
+  process-get-user.ts
   types.ts
   index.ts
 ```
 
-Mount in `index.ts`:
-
 ```ts
-import { createMyFeatureRouter } from './src/domains/my-feature';
-app.use('/api/my-feature', createMyFeatureRouter());
+import { createUsersRouter } from './src/services/users';
+app.use('/api/users', createUsersRouter());
 ```
 
-### 3) When to add `src/data/` and managed clients
+### 3) Adding database access
 
-- Add `src/data/{entity}/` when you introduce a database.
-- Add `src/services/managed/` (or equivalent) and follow [004 – Managed clients & startup init](./004-managed-clients-and-startup-init.md).
+When you add Supabase (or another DB), add **one folder per table** under `src/data/`:
 
-### 4) Keep `src/services/` for cross-cutting concerns
+```text
+src/data/users/
+  get-user-by-id.ts
+  create-user.ts
+  index.ts
+```
 
-Middleware, health checks, and server bootstrap stay in `src/services/` even after domains exist. Do not put domain business logic in `services/`.
+`process-get-user.ts` in `src/services/users/` calls `getUserById` from `src/data/users/` — never the other way around.
 
-## Consequences
+### 4) Managed clients
 
-- README “Adding New Routes” examples under `src/services/` are valid for the **first** simple router; migrate to `src/domains/` before the feature grows.
-- [002 – Router factory & handler pattern](./002-router-factory-and-handler-pattern.md) applies to both `services/` routers and domain routers.
+Add `src/services/managed/` per [004](./004-managed-clients-and-startup-init.md).
+
+### 5) What stays in `src/services/`
+
+| Folder | Role |
+|--------|------|
+| `middleware/`, `health/`, `server/` | Cross-cutting |
+| `{feature}/` | Feature routers, handlers, `processX()` |
+| `managed/` | Shared client init |
+
+## Anti-patterns
+
+- ❌ `src/domains/` — not part of this template
+- ❌ CRUD or `.from('table')` inside handlers or `processX()`
+- ❌ Business rules inside `src/data/{table}/`
 
 ## References
 
-- Repository root `README.md` — project structure and quick start.
+- Root `README.md` — quick start and “Adding New Routes”

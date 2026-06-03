@@ -2,16 +2,16 @@
 
 ## Goal
 
-Initialize managed service clients once at server startup, then reuse them in domain handlers through `getManagedSupabaseClient()` and `getManagedAnthropicClient()`.
+Initialize managed service clients once at server startup, then reuse them in service handlers through `getManagedSupabaseClient()` and `getManagedAnthropicClient()`.
 
 ## Managed Service Clients
 
-Use managed client accessors in domain code:
+Use managed client accessors in service handlers and `processX()` code:
 
 - `getManagedSupabaseClient()`
 - `getManagedAnthropicClient()`
 
-Do not call `createClient()` inside handlers, routers, domain services, or data-layer functions.
+Do not call `createClient()` inside handlers, routers, `processX()` functions, or data-layer functions.
 
 ✅ Correct:
 ```typescript
@@ -149,17 +149,18 @@ export const generateSummaryHandler = async (req: Request, res: Response): Promi
 };
 ```
 
-## Domain and Data-Layer Boundaries
+## Service and data-layer boundaries
 
-- Routers are thin and only wire routes.
-- Handlers live in `src/domains/{domain}/routes/` (one handler per file).
-- Business logic lives in `processX()` functions (with JSDoc).
-- CRUD functions live in `src/data/{entity}/` (one function per file with JSDoc).
-- Never inline SQL/queries in handlers or domain business logic.
+- Routers are thin and only wire routes (`src/services/{feature}/router.ts`).
+- Handlers live in `src/services/{feature}/routes/` (one handler per file).
+- Action/business logic lives in `processX()` under the same service folder (with JSDoc).
+- CRUD only in `src/data/{table}/` — one folder per table, one function per file (with JSDoc).
+- Never use `src/domains/`.
+- Never inline SQL/queries in handlers or `processX()`.
 
 ✅ Correct:
 ```typescript
-// src/domains/projects/router.ts
+// src/services/projects/router.ts
 import { Router } from 'express';
 import { createProjectHandler } from './routes/create-project-handler';
 
@@ -175,11 +176,10 @@ export const createProjectsRouter = (): Router => {
 
 ❌ Incorrect:
 ```typescript
-// src/domains/projects/router.ts
+// src/services/projects/router.ts
 router.post('/', async (req, res) => {
   const supabase = createClient(url, key); // ❌ unmanaged client
-  const { data, error } = await supabase.from('projects').insert(req.body); // ❌ inline CRUD
-  // ❌ inline business logic
+  const { data, error } = await supabase.from('projects').insert(req.body); // ❌ inline CRUD in router
 });
 ```
 
@@ -249,4 +249,4 @@ const supabase = createClient(url, key); // ❌ no direct CRUD/business logic in
 ## Related
 
 - See [Router Factory & Handler Pattern](./002-router-factory-and-handler-pattern.md)
-- See [Domain-Based Architecture](./003-domain-based-architecture.md)
+- See [003 – Data layer CRUD boundaries](./003-data-layer-crud-boundaries.md)

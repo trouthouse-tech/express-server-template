@@ -1,111 +1,85 @@
-# 003: Data Layer CRUD Boundaries
+# 003 - Data Layer CRUD Boundaries
 
-- **Status:** Accepted
-- **Date:** 2026-02-27
-- **Applies to:** `roads-platform-express-server` (Express)
+## Status
+
+Accepted
+
+## Applies to
+
+**express-server-template** and Express apps created from it.
 
 ## Context
 
-To keep domain code maintainable and testable, database access must be isolated from handlers, routers, and business logic. This document defines strict boundaries for CRUD behavior, Supabase client usage, and file organization.
+Database access must stay isolated from HTTP handlers and business logic. **`src/data/{table}/` is CRUD only.** Action and business logic that **uses** CRUD lives in **`src/services/{feature}/`** (`processX()`), never in `src/data/` and never in `src/domains/` (which this template does not use).
 
 ## Decision
 
-### 1) CRUD location and ownership
+### 1) CRUD location
 
-1. All database CRUD operations live in `src/data/{entity}/`.
-2. Never inline SQL/query-builder calls in domain handlers or business logic.
-3. The data layer is the only layer that talks directly to Supabase tables.
+1. All database CRUD lives in `src/data/{table}/` — **one folder per database table**.
+2. Never inline SQL or query-builder calls in handlers, routers, or `processX()`.
+3. Only the data layer talks directly to tables.
 
-### 2) One function per file in the data layer
+### 2) One function per file
 
-1. Each file in `src/data/{entity}/` exports exactly one CRUD function.
-2. File names describe the action (for example: `getUserById.ts`, `createUser.ts`, `updateUserById.ts`, `deleteUserById.ts`).
+1. Each file in `src/data/{table}/` exports exactly one CRUD function.
+2. File names describe the action (`get-user-by-id.ts`, `create-user.ts`, …).
 3. Every function has JSDoc.
+4. Optional `types.ts` in the same table folder for row types.
 
-### 3) Supabase client contract
+### 3) What is forbidden in `src/data/`
 
-1. Every data-layer function accepts `SupabaseClient` as the first parameter.
-2. Domain code must not call `createClient()` directly.
-3. Domain handlers obtain clients via `getManagedSupabaseClient()` and pass the client into data functions.
-4. Handlers must check for null managed clients and return HTTP 500 if unavailable.
+- Business rules (validation beyond DB constraints, pricing, permissions orchestration)
+- HTTP or Express types
+- Calling `processX()` or handlers
+- AI / external API calls
 
-### 4) Domain architecture
+### 4) Supabase client contract
 
-1. Domains are self-contained under `src/domains/{domain}/`.
-2. Required structure:
-   - `router.ts` (factory only)
-   - `routes/` (one handler per file)
-   - `config.ts`
-   - `types.ts` (use `type`, not `interface`)
-3. Routers are thin: route wiring only, no business logic or try/catch blocks.
-4. Handlers delegate business logic to `processX()` functions.
+1. Every data function accepts `SupabaseClient` as the first parameter.
+2. No `createClient()` in data, services, or handlers.
+3. Handlers get clients via `getManagedSupabaseClient()`, pass into `processX()`, then into data functions.
+4. Null managed client → HTTP `500`.
 
-### 5) Handler contract
+### 5) Service layer (`src/services/{feature}/`)
 
-Each handler follows this order:
+1. `router.ts` — factory only, thin wiring.
+2. `routes/` — one handler per file; no inline queries.
+3. `process-*.ts` — business/action logic; **may call** `src/data/{table}/` only.
+4. Handlers: get client → validate → `processX()` → try/catch → response.
 
-1. Get managed client(s)
-2. Validate request
-3. Call business logic (`processX()`)
-4. Handle errors in `try/catch`
-5. Return response
-
-Status code contract:
-
-- `200` success
-- `400` client error
-- `500` server error
-
-Error payload shape:
+Status codes: `200` success, `400` client error, `500` server error.
 
 ```json
 { "success": false, "error": "..." }
 ```
-
-### 6) Additional architecture constraints
-
-1. Initialize managed service clients once at server startup, never per-request.
-2. Supabase edge functions call Railway endpoints only (no CRUD/business logic in edge).
-3. Extract utilities used 2+ times into `src/utils/{domain}/` as pure functions.
-4. Use emoji log prefixes consistently:
-   - `🚀` start
-   - `✅` success
-   - `❌` error
-   - `📥` request
-   - `📤` response
-   - `🤖` AI
-   - `💾` DB
 
 ## Reference layout
 
 ```text
 src/
   data/
-    users/
-      getUserById.ts
-      createUser.ts
-      updateUserById.ts
-      deleteUserById.ts
-  domains/
+    users/                       # table name = folder name
+      get-user-by-id.ts
+      create-user.ts
+      types.ts
+      index.ts
+  services/
     users/
       router.ts
-      config.ts
-      types.ts
       routes/
-        getUserHandler.ts
-      processGetUser.ts
-  utils/
-    users/
-      normalizeUserName.ts
+        get-user-handler.ts
+      process-get-user.ts
+      types.ts
 ```
 
 ## ✅ Correct examples
 
-### Data layer function (`src/data/users/getUserById.ts`)
+### Data (`src/data/users/get-user-by-id.ts`)
 
 ```ts
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { UserRow } from "../../domains/users/types";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { UserRow } from './types';
 
 /**
  * Fetches one user row by ID.
@@ -114,40 +88,35 @@ export async function getUserById(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<UserRow | null> {
-  const { data, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", userId)
-    .single();
-
+  console.log('💾 getUserById', { userId });
+  const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
   if (error) throw error;
   return data;
 }
 ```
 
-### Business logic (`src/domains/users/processGetUser.ts`)
+### Business logic (`src/services/users/process-get-user.ts`)
 
 ```ts
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { getUserById } from "../../data/users/getUserById";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getUserById } from '../../data/users/get-user-by-id';
 
 /**
- * Processes user retrieval domain logic.
+ * Loads a user for GET /users/:id.
  */
-export async function processGetUser(
-  supabase: SupabaseClient,
-  userId: string,
-) {
-  return getUserById(supabase, userId);
+export async function processGetUser(supabase: SupabaseClient, userId: string) {
+  const user = await getUserById(supabase, userId);
+  if (!user) throw new Error('User not found');
+  return user;
 }
 ```
 
-### Handler (`src/domains/users/routes/getUserHandler.ts`)
+### Handler (`src/services/users/routes/get-user-handler.ts`)
 
 ```ts
-import type { Request, Response } from "express";
-import { getManagedSupabaseClient } from "../../../services/managed/supabase";
-import { processGetUser } from "../processGetUser";
+import type { Request, Response } from 'express';
+import { getManagedSupabaseClient } from '../../managed/clients';
+import { processGetUser } from '../process-get-user';
 
 /**
  * Handles GET /users/:id.
@@ -156,66 +125,61 @@ export async function getUserHandler(req: Request, res: Response) {
   try {
     const supabase = getManagedSupabaseClient();
     if (!supabase) {
-      console.error("❌ Supabase client unavailable");
-      return res.status(500).json({ success: false, error: "Service unavailable" });
+      return res.status(500).json({ success: false, error: 'Service unavailable' });
     }
-
     const { id } = req.params;
     if (!id) {
-      return res.status(400).json({ success: false, error: "Missing id" });
+      return res.status(400).json({ success: false, error: 'Missing id' });
     }
-
-    console.info("📥 GET /users/:id", { id });
+    console.log('📥 GET /users/:id', { id });
     const user = await processGetUser(supabase, id);
-    console.info("✅ User fetched", { id });
-
     return res.status(200).json({ success: true, data: user });
   } catch (error) {
-    console.error("❌ Failed to fetch user", error);
-    return res.status(500).json({ success: false, error: "Internal server error" });
+    console.error('❌ Failed to fetch user', error);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
 ```
 
 ## ❌ Incorrect examples
 
-### Inline query in domain logic (not allowed)
+### Inline query in `processX` (not allowed)
 
 ```ts
-// src/domains/users/processGetUser.ts
+// src/services/users/process-get-user.ts
 export async function processGetUser(supabase, userId: string) {
-  // ❌ Query is inline in domain logic.
-  const { data } = await supabase.from("users").select("*").eq("id", userId).single();
+  const { data } = await supabase.from('users').select('*').eq('id', userId).single(); // ❌
   return data;
 }
 ```
 
-### Multiple CRUD functions in one data file (not allowed)
+### Business logic in data layer (not allowed)
 
 ```ts
-// src/data/users/userCrud.ts
-// ❌ Violates one-function-per-file rule.
+// src/data/users/get-user-by-id.ts
+export async function getUserById(supabase, userId: string) {
+  if (!userId.startsWith('usr_')) throw new Error('bad id'); // ❌
+}
+```
+
+### Multiple CRUD functions in one file (not allowed)
+
+```ts
+// src/data/users/user-crud.ts  ❌
 export async function getUserById(...) {}
 export async function createUser(...) {}
 ```
 
-### Creating Supabase clients in domain code (not allowed)
+### Using `src/domains/` (not allowed)
 
-```ts
-// src/domains/users/routes/getUserHandler.ts
-import { createClient } from "@supabase/supabase-js";
-
-export async function getUserHandler(req, res) {
-  // ❌ Do not construct clients per request.
-  const supabase = createClient(process.env.URL!, process.env.KEY!);
-}
+```text
+src/domains/users/   # ❌ not part of this template
 ```
 
 ## Enforcement checklist
 
-- [ ] CRUD lives in `src/data/{entity}/`
-- [ ] One function per data file with JSDoc
-- [ ] Supabase client is first argument in each data function
-- [ ] No inline queries in handlers/process functions
-- [ ] Handlers check managed client null -> `500`
-- [ ] Routers only wire routes via `createXRouter(): Router`
+- [ ] One `src/data/{table}/` folder per table
+- [ ] One CRUD function per file with JSDoc
+- [ ] No queries in handlers or `processX()`
+- [ ] Business logic in `src/services/{feature}/process-*.ts`
+- [ ] No `src/domains/` directory

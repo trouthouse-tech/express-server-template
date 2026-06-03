@@ -92,7 +92,9 @@ NODE_ENV=development
 
 ## Adding New Routes
 
-1. Create a new router in `src/services/`:
+Feature routes and business logic live under `src/services/{feature}/`. When you add a database, put CRUD in `src/data/{table}/` (one file per operation) and call those functions from `processX()` in the service folder.
+
+1. Create a new router in `src/services/{feature}/`:
 
 ```typescript
 // src/services/my-feature/create-my-router.ts
@@ -136,16 +138,23 @@ NODE_ENV=production node dist/index.js
 
 ## Architecture & agent rules
 
-Cursor agents and contributors should follow **`.cursor/rules/AGENTS.md`** and the ADRs in **`.cursor/architecture/`** (starter layout in `007-starter-template-layout.md`).
+Cursor agents and contributors should follow **`.cursor/rules/AGENTS.md`** and the ADRs in **`.cursor/architecture/`**.
+
+| Layer | Path | Purpose |
+|-------|------|---------|
+| CRUD | `src/data/{table}/` | One folder per table, one function per file — **no business logic** |
+| HTTP + actions | `src/services/{feature}/` | Routers, handlers, `processX()` business logic |
+| Cross-cutting | `src/services/middleware`, `health`, `server` | Shipped in starter |
+
+There is **no `src/domains/`** folder in this template.
 
 ## Architecture Principles
 
-This template follows these conventions:
-- **One function per file** - Each file contains a single, focused function
-- **Factory pattern** - Routers are created via factory functions
-- **Index exports** - Every folder has an `index.ts` for clean imports
-- **Type safety** - Explicit types for all functions and routes
-- **Middleware separation** - Early middleware vs error handling
+- **One function per file** — including each CRUD operation in its own file under `src/data/{table}/`
+- **Factory pattern** — `createXRouter(): Router` in `src/services/{feature}/`
+- **Index exports** — every folder has an `index.ts`
+- **CRUD vs services** — database calls only in `src/data/`; orchestration in `src/services/`
+- **Type safety** — use `type`, not `interface`
 
 ## License
 

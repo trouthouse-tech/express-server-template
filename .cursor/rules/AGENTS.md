@@ -5,56 +5,56 @@ BEFORE implementing ANY feature, you MUST:
 2. Search `.cursor/architecture/` for relevant Express ADRs.
 3. Follow documented patterns EXACTLY.
 
-## Starter vs full layout
+## Layout (no `src/domains/`)
 
-This repo ships with **`src/services/`** (health, middleware, server). As features grow, add **`src/domains/{domain}/`**, **`src/data/{entity}/`**, and managed clients per ADR 001–006. See [007 – Starter template layout](./architecture/007-starter-template-layout.md).
+| Path | Purpose |
+|------|---------|
+| **`src/data/{table}/`** | **CRUD only** — one folder per database table, one function per file |
+| **`src/services/{feature}/`** | Routers, handlers, `processX()` action/business logic |
+| **`src/services/middleware`**, **`health`**, **`server`** | Cross-cutting (shipped in starter) |
+| **`src/utils/{feature}/`** | Pure helpers used 2+ times |
 
-## Domain architecture
-- ALWAYS organize new API features in `src/domains/{domain}/` with `router.ts`, `routes/`, `config.ts`, and `types.ts`.
-- MUST keep each domain self-contained; NEVER mix domain internals across unrelated domains.
-- MUST use `type` and NEVER use `interface`.
-- MUST use router factory pattern: export `createXRouter(): Router`; NEVER export a router instance directly.
+**Never** add `src/domains/`. Business logic that uses CRUD belongs in **`src/services`**, not in `src/data`.
+
+## Services (HTTP + business logic)
+
+- ALWAYS organize API features in `src/services/{feature}/` with `router.ts`, `routes/`, optional `config.ts` and `types.ts`.
+- MUST use router factory pattern: `createXRouter(): Router`; NEVER export a router instance directly.
 - ALWAYS keep routers thin: route definitions only, no business logic.
-- ALWAYS keep handlers in `src/domains/{domain}/routes/` with one handler per file.
-- Until domains exist, new routers MAY live under `src/services/{feature}/` using the same factory pattern (see README “Adding New Routes”).
+- ALWAYS keep handlers in `src/services/{feature}/routes/` with one handler per file.
+- ALWAYS put action/business logic in `processX()` files in the same `src/services/{feature}/` folder.
+- MUST use `type` and NEVER use `interface`.
 
 ## Handlers
-- MUST follow this order: (1) get managed client, (2) validate request, (3) call business logic, (4) try/catch, (5) return response.
-- ALWAYS delegate business logic to `processX()` functions; NEVER inline business logic in handlers.
-- MUST add JSDoc to every router factory, handler, and business logic function.
-- MUST handle errors in handlers (not routers), log errors, and return `{ success: false, error }` with `500`.
-- MUST use status codes consistently: `200` success, `400` client error, `500` server error.
 
-## Data layer
-- MUST place database CRUD in `src/data/{entity}/`; NEVER inline queries in domain logic or handlers.
-- MUST keep one CRUD function per file in `src/data/{entity}/` with JSDoc on every function.
-- ALWAYS extract logic used 2+ times into `src/utils/{domain}/`.
-- Utilities in `src/utils/{domain}/` MUST be pure and MUST NOT have side effects.
+- MUST follow: (1) get managed client, (2) validate request, (3) call `processX()`, (4) try/catch, (5) return response.
+- NEVER inline business logic or database queries in handlers.
+- MUST add JSDoc on router factories, handlers, and `processX()` functions.
+- MUST return `{ success: false, error }` with `500` on server errors; `200` / `400` per ADR 006.
 
-## Services
-- MUST use `getManagedSupabaseClient()` and `getManagedAnthropicClient()` for managed services when added.
-- NEVER call `createClient()` (or equivalent constructors) in domain code.
-- ALWAYS check managed clients for `null` before use; MUST return `500` if null/unavailable.
-- MUST initialize managed service clients once at server startup; NEVER initialize per request.
-- Supabase edge functions MUST ONLY call Railway endpoints and NEVER include CRUD or business logic.
+## Data layer (`src/data/{table}/`)
+
+- MUST place **only** database CRUD in `src/data/{table}/` — **one folder per table**.
+- MUST keep **one CRUD function per file** with JSDoc.
+- MUST NOT put business rules, HTTP, or orchestration in `src/data/`.
+- NEVER inline queries in handlers or `processX()` — call data functions instead.
+
+## Managed clients & edge
+
+- MUST use `getManagedSupabaseClient()` / `getManagedAnthropicClient()` when added; NEVER `createClient()` in handlers, services, or data code.
+- MUST initialize managed clients once at startup; null-check before use → `500`.
+- Supabase edge functions MUST ONLY call Railway endpoints.
 
 ## Logging
-- MUST use these emoji prefixes consistently:
-  - `🚀` start
-  - `✅` success
-  - `❌` error
-  - `📥` request
-  - `📤` response
-  - `🤖` AI
-  - `💾` DB
 
-## Quick reference (Express ADRs)
+Use emoji prefixes: `🚀` `✅` `❌` `📥` `📤` `🤖` `💾`
 
-- Architecture entrypoint → `.cursor/architecture/README.md`
-- Starter layout → `.cursor/architecture/007-starter-template-layout.md`
-- File & domain organization → `.cursor/architecture/001-file-and-domain-organization.md`
-- Router factory & handler pattern → `.cursor/architecture/002-router-factory-and-handler-pattern.md`
-- Data layer & CRUD boundaries → `.cursor/architecture/003-data-layer-crud-boundaries.md`
-- Managed clients & startup init → `.cursor/architecture/004-managed-clients-and-startup-init.md`
-- Edge functions Railway-only → `.cursor/architecture/005-edge-functions-railway-only.md`
-- Logging & error response standards → `.cursor/architecture/006-logging-and-error-response-standards.md`
+## Quick reference
+
+- [001 – File & service organization](./architecture/001-file-and-service-organization.md)
+- [002 – Router factory & handler pattern](./architecture/002-router-factory-and-handler-pattern.md)
+- [003 – Data layer CRUD boundaries](./architecture/003-data-layer-crud-boundaries.md)
+- [004 – Managed clients & startup init](./architecture/004-managed-clients-and-startup-init.md)
+- [005 – Edge functions Railway-only](./architecture/005-edge-functions-railway-only.md)
+- [006 – Logging & error response standards](./architecture/006-logging-and-error-response-standards.md)
+- [007 – Starter template layout](./architecture/007-starter-template-layout.md)
