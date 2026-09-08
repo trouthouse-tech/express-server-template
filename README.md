@@ -92,7 +92,7 @@ NODE_ENV=development
 
 ## Adding New Routes
 
-Feature routes and business logic live under `src/services/{feature}/`. When you add a database, put CRUD in `src/data/{table}/` (one file per operation) and call those functions from `processX()` in the service folder.
+Feature routes and business logic live under `src/services/{feature}/`. When you add a database, put row types in `src/model/{entity}.ts` and CRUD in `src/data/{table}/` (one file per operation); call those functions from `processX()` in the service folder.
 
 1. Create a new router in `src/services/{feature}/`:
 
@@ -142,11 +142,12 @@ Cursor agents and contributors should follow **`.cursor/rules/AGENTS.md`** and t
 
 | Layer | Path | Purpose |
 |-------|------|---------|
+| Models | `src/model/{entity}.ts` | Table row and write-input types — **never** `src/data/{table}/types.ts` |
 | CRUD | `src/data/{table}/` | One folder per table, one function per file — **no business logic** |
 | HTTP + actions | `src/services/{feature}/` | Routers, handlers, `processX()` business logic |
 | Cross-cutting | `src/services/middleware`, `health`, `server` | Shipped in starter |
 
-There is **no `src/domains/`** folder in this template.
+There is **no `src/domains/`** folder in this template. Managed clients remain **Supabase**.
 
 ## Architecture Principles
 

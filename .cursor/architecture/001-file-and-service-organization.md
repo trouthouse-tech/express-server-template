@@ -16,13 +16,15 @@ Express servers in this template organize **HTTP and business logic** under `src
 
 ```text
 src/
+  model/                         # table row + write-input types (one file per entity)
+    user.ts
+    index.ts
   data/                          # CRUD only — one folder per database table
     users/
       get-user-by-id.ts
       create-user.ts
       update-user-by-id.ts
       delete-user-by-id.ts
-      types.ts                   # optional row/DTO types for this table
       index.ts
     orders/
       insert-order.ts
@@ -81,7 +83,7 @@ src/
 ```typescript
 // src/data/users/get-user-by-id.ts
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { UserRow } from './types';
+import type { User } from '../../model/user';
 
 /**
  * Fetches one user row by id.
@@ -89,7 +91,7 @@ import type { UserRow } from './types';
 export const getUserById = async (
   supabase: SupabaseClient,
   userId: string,
-): Promise<UserRow | null> => {
+): Promise<User | null> => {
   console.log('💾 getUserById', { userId });
   const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
   if (error) throw error;
