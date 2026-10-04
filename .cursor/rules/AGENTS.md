@@ -43,7 +43,7 @@ BEFORE implementing ANY feature, you MUST:
 
 ## Managed clients & edge
 
-- MUST use `getManagedSupabaseClient()` / `getManagedAnthropicClient()` when added; NEVER `createClient()` in handlers, services, or data code.
+- MUST use `getManagedSupabaseClient()` / `getManagedAnthropicClient()` / `getManagedStripeClient()` when added; NEVER `createClient()` or `new Stripe()` in handlers, services, or data code.
 - MUST initialize managed clients once at startup; null-check before use → `500`.
 - Supabase edge functions MUST ONLY call Railway endpoints.
 
@@ -61,3 +61,4 @@ Use emoji prefixes: `🚀` `✅` `❌` `📥` `📤` `🤖` `💾`
 - [006 – Logging & error response standards](./architecture/006-logging-and-error-response-standards.md)
 - [007 – Starter template layout](./architecture/007-starter-template-layout.md)
 - [008 – Domain models](./architecture/008-domain-models.md)
+- [009 – Stripe Checkout one-time payment](./architecture/009-stripe-checkout-one-time-payment.md)

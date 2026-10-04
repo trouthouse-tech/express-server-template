@@ -12,6 +12,7 @@ ADRs for **express-server-template** and apps created from it.
 6. [006 – Logging & error response standards](./006-logging-and-error-response-standards.md) — Emoji logging, response shape.
 7. [007 – Starter template layout](./007-starter-template-layout.md) — Shipped `src/services/` tree.
 8. [008 – Domain models (`src/model`)](./008-domain-models.md) — table row + write-input types; never `src/data/{table}/types.ts`.
+9. [009 – Stripe Checkout one-time payment](./009-stripe-checkout-one-time-payment.md) — hosted `mode: "payment"`, webhook + complete, grant once when paid.
 
 ## How to use
 

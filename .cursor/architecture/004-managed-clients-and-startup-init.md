@@ -2,7 +2,7 @@
 
 ## Goal
 
-Initialize managed service clients once at server startup, then reuse them in service handlers through `getManagedSupabaseClient()` and `getManagedAnthropicClient()`.
+Initialize managed service clients once at server startup, then reuse them in service handlers through `getManagedSupabaseClient()`, `getManagedAnthropicClient()`, and `getManagedStripeClient()`.
 
 ## Managed Service Clients
 
@@ -10,8 +10,9 @@ Use managed client accessors in service handlers and `processX()` code:
 
 - `getManagedSupabaseClient()`
 - `getManagedAnthropicClient()`
+- `getManagedStripeClient()`
 
-Do not call `createClient()` inside handlers, routers, `processX()` functions, or data-layer functions.
+Do not call `createClient()` or `new Stripe()` inside handlers, routers, `processX()` functions, or data-layer functions. Construct Stripe only in `initializeStripeClient()` at startup.
 
 ✅ Correct:
 ```typescript
