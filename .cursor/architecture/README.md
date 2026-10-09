@@ -13,6 +13,7 @@ ADRs for **express-server-template** and apps created from it.
 7. [007 – Starter template layout](./007-starter-template-layout.md) — Shipped `src/services/` tree.
 8. [008 – Domain models (`src/model`)](./008-domain-models.md) — table row + write-input types; never `src/data/{table}/types.ts`.
 9. [009 – Stripe Checkout one-time payment](./009-stripe-checkout-one-time-payment.md) — hosted `mode: "payment"`, webhook + complete, grant once when paid.
+10. [010 – No SQL functions](./010-no-sql-functions.md) — tables, indexes, grants, RLS only; `updated_at` in CRUD.
 
 ## How to use
 

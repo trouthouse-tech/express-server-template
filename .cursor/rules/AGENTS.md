@@ -33,6 +33,11 @@ BEFORE implementing ANY feature, you MUST:
 - MUST add JSDoc on router factories, handlers, and `processX()` functions.
 - MUST return `{ success: false, error }` with `500` on server errors; `200` / `400` per ADR 006.
 
+## SQL
+
+- NEVER `CREATE FUNCTION`, `CREATE TRIGGER`, or stored procedures. Tables, indexes, grants, RLS, and `CHECK` only ([010](./architecture/010-no-sql-functions.md)).
+- MUST set `updated_at` in data-layer CRUD, not in the database.
+
 ## Data layer (`src/data/{table}/`)
 
 - MUST place **only** database CRUD in `src/data/{table}/` — **one folder per table**.
@@ -62,3 +67,4 @@ Use emoji prefixes: `🚀` `✅` `❌` `📥` `📤` `🤖` `💾`
 - [007 – Starter template layout](./architecture/007-starter-template-layout.md)
 - [008 – Domain models](./architecture/008-domain-models.md)
 - [009 – Stripe Checkout one-time payment](./architecture/009-stripe-checkout-one-time-payment.md)
+- [010 – No SQL functions](./architecture/010-no-sql-functions.md)
