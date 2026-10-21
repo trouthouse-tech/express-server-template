@@ -9,7 +9,7 @@ BEFORE implementing ANY feature, you MUST:
 
 | Path | Purpose |
 |------|---------|
-| **`src/model/{entity}.ts`** | Table row and write-input types ([008](./architecture/008-domain-models.md)) |
+| **`src/model/{entity}/`** | Table row and write-input types ([008](./architecture/008-domain-models.md)) |
 | **`src/data/{table}/`** | **CRUD only** — one folder per database table, one function per file |
 | **`src/services/{feature}/`** | Routers, handlers, `processX()` action/business logic |
 | **`src/services/middleware`**, **`health`**, **`server`** | Cross-cutting (shipped in starter) |
@@ -42,7 +42,7 @@ BEFORE implementing ANY feature, you MUST:
 
 - MUST place **only** database CRUD in `src/data/{table}/` — **one folder per table**.
 - MUST keep **one CRUD function per file** with JSDoc.
-- MUST NOT put model types in `src/data/` — use `src/model/{entity}.ts`.
+- MUST NOT put model types in `src/data/` — use `src/model/{entity}/`.
 - MUST NOT put business rules, HTTP, or orchestration in `src/data/`.
 - NEVER inline queries in handlers or `processX()` — call data functions instead.
 

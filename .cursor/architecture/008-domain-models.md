@@ -16,19 +16,21 @@ Managed clients remain **Supabase** (`getManagedSupabaseClient()`). This ADR doe
 
 ### 1) Canonical location
 
-Every persisted table entity lives in **`src/model/{entity}.ts`** (singular kebab-case, matching the Next.js web app).
+Every persisted table entity lives in **`src/model/{entity}/`** (singular kebab-case, matching the Next.js web app). The folder’s **`index.ts`** exports the row type plus create/update/upsert input types and colocated unions.
 
 ```text
 src/model/
-  user.ts
-  order.ts
   index.ts
+  order/
+    index.ts
+  user/
+    index.ts
 ```
 
 ✅ Correct:
 
 ```ts
-// src/model/order.ts
+// src/model/order/index.ts
 export type Order = {
   id: string;
   status: string;
@@ -47,11 +49,14 @@ export type CreateOrderInput = {
 src/data/orders/types.ts   # ❌ no model types in the data layer
 ```
 
-### 2) One entity file
+Tiny greenfield entities may use flat `src/model/{entity}.ts`; prefer folders when the entity has multiple related types.
 
-- One **table entity** per file (plus that entity’s status unions and create/update/upsert input types).
+### 2) One entity folder
+
+- One **table entity** per folder (plus that entity’s status unions and create/update/upsert input types in `index.ts`).
 - Do not dump unrelated tables into one `types.ts`.
 - Re-export from `src/model/index.ts`.
+- **Table folders** in `src/data/` use the SQL table name (often plural): `src/data/orders/` vs `src/model/order/`.
 
 ### 3) What stays out of `src/model`
 
@@ -71,12 +76,12 @@ Data barrels export **CRUD functions only**. They must not re-export model types
 
 ### 5) Pairing with the web app
 
-Keep field names and entity file names aligned with the Next.js app `src/model/`. Create/update **payloads** on the web stay in `src/api/{domain}/client.ts`; Express write inputs live next to the row type in `src/model/`.
+Keep field names and entity folder names aligned with the Next.js app `src/model/`. Create/update **payloads** on the web stay in `src/api/{domain}/client.ts`; Express write inputs live in `src/model/{entity}/`.
 
 ## Consequences
 
 - `src/data/` stays SQL/CRUD.
-- Agents add `src/model/{entity}.ts` before the first data function for a new table.
+- Agents add `src/model/{entity}/index.ts` before the first data function for a new table.
 - ADRs 001 and 003 no longer allow `src/data/{table}/types.ts`.
 
 ## Related
