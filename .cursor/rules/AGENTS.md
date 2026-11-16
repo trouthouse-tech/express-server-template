@@ -9,7 +9,7 @@ BEFORE implementing ANY feature, you MUST:
 
 | Path | Purpose |
 |------|---------|
-| **`src/model/{entity}/`** | Table row and write-input types ([008](./architecture/008-domain-models.md)) |
+| **`src/model/{entity}/`** | Table row and write-input types ([008](../architecture/008-domain-models.md)) |
 | **`src/data/{table}/`** | **CRUD only** — one folder per database table, one function per file |
 | **`src/services/{feature}/`** | Routers, handlers, `processX()` action/business logic |
 | **`src/services/middleware`**, **`health`**, **`server`** | Cross-cutting (shipped in starter) |
@@ -35,7 +35,7 @@ BEFORE implementing ANY feature, you MUST:
 
 ## SQL
 
-- NEVER `CREATE FUNCTION`, `CREATE TRIGGER`, or stored procedures. Tables, indexes, grants, RLS, and `CHECK` only ([010](./architecture/010-no-sql-functions.md)).
+- NEVER `CREATE FUNCTION`, `CREATE TRIGGER`, or stored procedures. Tables, indexes, grants, RLS, and `CHECK` only ([010](../architecture/010-no-sql-functions.md)).
 - MUST set `updated_at` in data-layer CRUD, not in the database.
 
 ## Data layer (`src/data/{table}/`)
@@ -58,13 +58,13 @@ Use emoji prefixes: `🚀` `✅` `❌` `📥` `📤` `🤖` `💾`
 
 ## Quick reference
 
-- [001 – File & service organization](./architecture/001-file-and-service-organization.md)
-- [002 – Router factory & handler pattern](./architecture/002-router-factory-and-handler-pattern.md)
-- [003 – Data layer CRUD boundaries](./architecture/003-data-layer-crud-boundaries.md)
-- [004 – Managed clients & startup init](./architecture/004-managed-clients-and-startup-init.md)
-- [005 – Edge functions Railway-only](./architecture/005-edge-functions-railway-only.md)
-- [006 – Logging & error response standards](./architecture/006-logging-and-error-response-standards.md)
-- [007 – Starter template layout](./architecture/007-starter-template-layout.md)
-- [008 – Domain models](./architecture/008-domain-models.md)
-- [009 – Stripe Checkout one-time payment](./architecture/009-stripe-checkout-one-time-payment.md)
-- [010 – No SQL functions](./architecture/010-no-sql-functions.md)
+- [001 – File & service organization](../architecture/001-file-and-service-organization.md)
+- [002 – Router factory & handler pattern](../architecture/002-router-factory-and-handler-pattern.md)
+- [003 – Data layer CRUD boundaries](../architecture/003-data-layer-crud-boundaries.md)
+- [004 – Managed clients & startup init](../architecture/004-managed-clients-and-startup-init.md)
+- [005 – Edge functions Railway-only](../architecture/005-edge-functions-railway-only.md)
+- [006 – Logging & error response standards](../architecture/006-logging-and-error-response-standards.md)
+- [007 – Starter template layout](../architecture/007-starter-template-layout.md)
+- [008 – Domain models](../architecture/008-domain-models.md)
+- [009 – Stripe Checkout one-time payment](../architecture/009-stripe-checkout-one-time-payment.md)
+- [010 – No SQL functions](../architecture/010-no-sql-functions.md)

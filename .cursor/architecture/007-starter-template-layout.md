@@ -51,10 +51,10 @@ src/data/users/
   get-user-by-id.ts
   create-user.ts
   index.ts
-src/model/user.ts
+src/model/user/index.ts
 ```
 
-Add **`src/model/{entity}.ts`** for the row and write-input types **before** the first data function ([008](./008-domain-models.md)). Never `src/data/{table}/types.ts`. Data barrels export CRUD functions only.
+Add **`src/model/{entity}/index.ts`** for the row and write-input types **before** the first data function ([008](./008-domain-models.md)). Never `src/data/{table}/types.ts`. Data barrels export CRUD functions only.
 
 `process-get-user.ts` in `src/services/users/` calls `getUserById` from `src/data/users/` — never the other way around.
 

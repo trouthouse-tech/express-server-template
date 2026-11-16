@@ -25,7 +25,7 @@ Database access must stay isolated from HTTP handlers and business logic. **`src
 1. Each file in `src/data/{table}/` exports exactly one CRUD function.
 2. File names describe the action (`get-user-by-id.ts`, `create-user.ts`, …).
 3. Every function has JSDoc.
-4. **No `types.ts` in the table folder.** Row and write-input types live in `src/model/{entity}.ts` ([008](./008-domain-models.md)).
+4. **No `types.ts` in the table folder.** Row and write-input types live in `src/model/{entity}/` ([008](./008-domain-models.md)).
 
 ### 3) What is forbidden in `src/data/`
 
@@ -58,12 +58,13 @@ Status codes: `200` success, `400` client error, `500` server error.
 
 ```text
 src/
-  model/
-    user.ts
   data/
     users/                       # table name = folder name
       get-user-by-id.ts
       create-user.ts
+      index.ts
+  model/
+    user/
       index.ts
   services/
     users/
@@ -80,7 +81,7 @@ src/
 
 ```ts
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { User } from '../../model/user';
+import type { UserRow } from '../../model/user';
 
 /**
  * Fetches one user row by ID.
@@ -88,7 +89,7 @@ import type { User } from '../../model/user';
 export async function getUserById(
   supabase: SupabaseClient,
   userId: string,
-): Promise<User | null> {
+): Promise<UserRow | null> {
   console.log('💾 getUserById', { userId });
   const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
   if (error) throw error;
