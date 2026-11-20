@@ -1,0 +1,34 @@
+import {
+  describeCanonicalDataConfigGap,
+  readCanonicalDataAccessMode,
+  readDirectBackendSecret,
+  readDirectBackendUrl,
+  readDispatcherGateSecret,
+  readGatewayProjectId,
+  readMainGatewayUrl,
+} from './config';
+import type { CanonicalDataClient } from './types';
+
+let managedClient: CanonicalDataClient | null = null;
+
+/**
+ * Returns the storage client (created once from .env), or null when it is not configured.
+ */
+export const getManagedCanonicalDataClient = (): CanonicalDataClient | null => {
+  if (managedClient) return managedClient;
+  const gap = describeCanonicalDataConfigGap();
+  if (gap) {
+    console.error(`❌ Storage client not configured. ${gap}`);
+    return null;
+  }
+  const accessMode = readCanonicalDataAccessMode();
+  managedClient = {
+    accessMode,
+    gatewayUrl: accessMode === 'gateway' ? readMainGatewayUrl() : null,
+    gatewayProjectId: accessMode === 'gateway' ? readGatewayProjectId() : null,
+    directUrl: accessMode === 'direct' ? readDirectBackendUrl() : null,
+    secret: accessMode === 'direct' ? readDirectBackendSecret() : null,
+    gateSecret: accessMode === 'gateway' ? readDispatcherGateSecret() : null,
+  };
+  return managedClient;
+};

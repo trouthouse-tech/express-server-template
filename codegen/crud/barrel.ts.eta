@@ -1,0 +1,3 @@
+<% for (const op of it.crud.operations) { -%>
+export { <%= op.name %> } from './<%= op.file %>';
+<% } -%>

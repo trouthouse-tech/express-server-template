@@ -1,0 +1,226 @@
+{
+  "version": 1,
+  "role": "express",
+  "kinds": {
+    "model": {
+      "files": [
+        {
+          "id": "model",
+          "path": "src/model/<%= it.table.entity %>/index.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "model/model.ts.eta",
+          "convention_keys": [
+            "data_model.model_types"
+          ]
+        },
+        {
+          "id": "model-barrel",
+          "path": "src/model/index.ts",
+          "each": "once",
+          "mode": "merge",
+          "merge": {
+            "on_missing_file": "empty",
+            "scope": "tables",
+            "present": {
+              "regex": "from\\s+['\"]\\./<%= it.h.reEscape(it.table.entity) %>(?:/index)?['\"]"
+            },
+            "steps": [
+              {
+                "op": "append_lines",
+                "line": "export type * from './<%= it.table.entity %>';"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "crud": {
+      "files": [
+        {
+          "id": "support:src/services/canonical-data-client/config.ts",
+          "path": "src/services/canonical-data-client/config.ts",
+          "each": "once",
+          "mode": "if_missing",
+          "template": "crud/support/src/services/canonical-data-client/config.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/canonical-data-client/get-managed-canonical-data-client.ts",
+          "path": "src/services/canonical-data-client/get-managed-canonical-data-client.ts",
+          "each": "once",
+          "mode": "if_missing",
+          "template": "crud/support/src/services/canonical-data-client/get-managed-canonical-data-client.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/canonical-data-client/index.ts",
+          "path": "src/services/canonical-data-client/index.ts",
+          "each": "once",
+          "mode": "if_missing",
+          "template": "crud/support/src/services/canonical-data-client/index.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/canonical-data-client/invoke-canonical-data-operation.ts",
+          "path": "src/services/canonical-data-client/invoke-canonical-data-operation.ts",
+          "each": "once",
+          "mode": "if_missing",
+          "template": "crud/support/src/services/canonical-data-client/invoke-canonical-data-operation.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/canonical-data-client/types.ts",
+          "path": "src/services/canonical-data-client/types.ts",
+          "each": "once",
+          "mode": "if_missing",
+          "template": "crud/support/src/services/canonical-data-client/types.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/http/pick-fields.ts",
+          "path": "src/utils/http/pick-fields.ts",
+          "each": "once",
+          "mode": "if_missing",
+          "template": "crud/support/src/utils/http/pick-fields.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "data-wrapper",
+          "path": "src/data/<%= it.names.folder %>/<%= it.op.file %>.ts",
+          "each": "operation",
+          "mode": "write",
+          "template": "crud/express/data-wrapper.ts.eta",
+          "convention_keys": [
+            "api.data.same_name_wrapper"
+          ]
+        },
+        {
+          "id": "data-barrel",
+          "path": "src/data/<%= it.names.folder %>/index.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/barrel.ts.eta"
+        },
+        {
+          "id": "process",
+          "path": "src/services/<%= it.names.folder %>/process-<%= it.op.file %>.ts",
+          "each": "operation",
+          "mode": "write",
+          "template": "crud/express/process.ts.eta"
+        },
+        {
+          "id": "handler-list",
+          "path": "src/services/<%= it.names.folder %>/routes/get-<%= it.names.folder %>-handler.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/express/handler-list.ts.eta"
+        },
+        {
+          "id": "handler-get-by-id",
+          "path": "src/services/<%= it.names.folder %>/routes/get-<%= it.names.entity %>-by-id-handler.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/express/handler-get-by-id.ts.eta"
+        },
+        {
+          "id": "handler-post",
+          "path": "src/services/<%= it.names.folder %>/routes/post-<%= it.names.entity %>-handler.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/express/handler-post.ts.eta"
+        },
+        {
+          "id": "handler-patch",
+          "path": "src/services/<%= it.names.folder %>/routes/patch-<%= it.names.entity %>-handler.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/express/handler-patch.ts.eta"
+        },
+        {
+          "id": "handler-delete",
+          "path": "src/services/<%= it.names.folder %>/routes/delete-<%= it.names.entity %>-handler.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/express/handler-delete.ts.eta"
+        },
+        {
+          "id": "routes-barrel",
+          "path": "src/services/<%= it.names.folder %>/routes/index.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/express/routes-barrel.ts.eta"
+        },
+        {
+          "id": "router",
+          "path": "src/services/<%= it.names.folder %>/router.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/express/router.ts.eta",
+          "convention_keys": [
+            "api.routes.standard_crud"
+          ]
+        },
+        {
+          "id": "service-barrel",
+          "path": "src/services/<%= it.names.folder %>/index.ts",
+          "each": "table",
+          "mode": "write",
+          "template": "crud/express/service-barrel.ts.eta"
+        },
+        {
+          "id": "data-router",
+          "path": "src/services/api-data/router.ts",
+          "each": "once",
+          "mode": "merge",
+          "merge": {
+            "on_missing_file": "create",
+            "create_template": "crud/express/data-router.ts.eta",
+            "scope": "tables",
+            "present": {
+              "contains": "create<%= it.names.Things %>Router()"
+            },
+            "steps": [
+              {
+                "op": "insert_before_last",
+                "marker": "  return router;",
+                "line": "  router.use('/<%= it.names.folder %>', create<%= it.names.Things %>Router());",
+                "error": "src/services/api-data/router.ts has no `  return router;` line"
+              },
+              {
+                "op": "add_imports",
+                "line": "import { create<%= it.names.Things %>Router } from '../<%= it.names.folder %>/router';"
+              }
+            ]
+          }
+        },
+        {
+          "id": "index-mount",
+          "path": "index.ts",
+          "each": "once",
+          "mode": "merge",
+          "merge": {
+            "on_missing_file": "error",
+            "missing_file_error": "index.ts not found at the repo root",
+            "scope": "once",
+            "present": {
+              "contains": "createDataRouter()"
+            },
+            "steps": [
+              {
+                "op": "insert_before_line_containing",
+                "markers": [
+                  "// Error handling middleware",
+                  "import { setupErrorHandling }",
+                  "setupErrorHandling(app)"
+                ],
+                "block": "// Table CRUD routes (generated by Code Control)\nimport { createDataRouter } from './src/services/api-data/router';\napp.use('/api/data', createDataRouter());\n\n",
+                "error": "index.ts: could not find where error handling starts to mount /api/data before it"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

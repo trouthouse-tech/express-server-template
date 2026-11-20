@@ -1,0 +1,16 @@
+<% const n = it.names; -%>
+import { Router } from 'express';
+import * as handlers from './routes';
+
+/**
+ * <%= n.table %> CRUD router for /api/data/<%= n.folder %>.
+ */
+export const create<%= n.Things %>Router = (): Router => {
+  const router = Router();
+  router.get('/', handlers.get<%= n.Things %>Handler);
+  router.get('/:id', handlers.get<%= n.Entity %>ByIdHandler);
+  router.post('/', handlers.post<%= n.Entity %>Handler);
+  router.patch('/:id', handlers.patch<%= n.Entity %>Handler);
+  router.delete('/:id', handlers.delete<%= n.Entity %>Handler);
+  return router;
+};

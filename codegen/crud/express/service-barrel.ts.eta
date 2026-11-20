@@ -1,0 +1,1 @@
+export { create<%= it.names.Things %>Router } from './router';

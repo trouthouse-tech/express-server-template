@@ -1,0 +1,6 @@
+<% const n = it.names; -%>
+export { get<%= n.Things %>Handler } from './get-<%= n.folder %>-handler';
+export { get<%= n.Entity %>ByIdHandler } from './get-<%= n.entity %>-by-id-handler';
+export { post<%= n.Entity %>Handler } from './post-<%= n.entity %>-handler';
+export { patch<%= n.Entity %>Handler } from './patch-<%= n.entity %>-handler';
+export { delete<%= n.Entity %>Handler } from './delete-<%= n.entity %>-handler';

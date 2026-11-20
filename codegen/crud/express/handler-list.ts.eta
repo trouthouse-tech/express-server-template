@@ -1,0 +1,39 @@
+<%
+/* GET /api/data/{folder} (+ ?{fk}= filters): one handler per file, { success, data } envelope (api.svc.*). */
+const n = it.names;
+const proc = (op) => `process${it.h.upperFirst(op.name)}`;
+const list = it.crud.operations.find((op) => op.kind === 'list');
+const listBys = it.crud.operations.filter((op) => op.kind === 'list_by');
+const name = `get${n.Things}Handler`;
+const route = `GET /api/data/${n.folder}${listBys.length > 0 ? `?${listBys.map((op) => `${op.column}=`).join('&')}` : ''}`;
+-%>
+import type { Request, Response } from 'express';
+import { getManagedCanonicalDataClient } from '../../canonical-data-client';
+<% for (const op of [list, ...listBys]) { -%>
+import { <%= proc(op) %> } from '../process-<%= op.file %>';
+<% } -%>
+
+/** <%= route %> */
+export const <%= name %> = async (req: Request, res: Response): Promise<void> => {
+  console.log('📥 [<%= n.folder %>.<%= name %>]', { params: req.params, query: req.query });
+  try {
+    const client = getManagedCanonicalDataClient();
+    if (!client) {
+      res.status(500).json({ success: false, error: 'Storage client unavailable' });
+      return;
+    }
+<% for (const op of listBys) { -%>
+    const <%= op.column %> = typeof req.query.<%= op.column %> === 'string' ? req.query.<%= op.column %>.trim() : '';
+    if (<%= op.column %>) {
+      const data = await <%= proc(op) %>(client, <%= op.column %>);
+      res.status(200).json({ success: true, data });
+      return;
+    }
+<% } -%>
+    const data = await <%= proc(list) %>(client);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error('❌ [<%= n.folder %>.<%= name %>]', error);
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+};

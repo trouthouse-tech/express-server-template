@@ -1,0 +1,23 @@
+<%
+/* src/data/{folder}/{operation}.ts: same-name invoke wrapper around the storage operation (api.data.same_name_wrapper). */
+const E = it.names.Entity;
+const op = it.op;
+const sig = {
+  list: { params: '', args: '[]', ret: `${E}[]`, types: [E] },
+  list_by: { params: `, ${op.column}: string`, args: `[${op.column}]`, ret: `${E}[]`, types: [E] },
+  get_by_id: { params: ', id: string', args: '[id]', ret: `${E} | null`, types: [E] },
+  create: { params: `, input: Create${E}Input`, args: '[input]', ret: E, types: [`Create${E}Input`, E] },
+  update: { params: `, id: string, input: Update${E}Input`, args: '[id, input]', ret: `${E} | null`, types: [E, `Update${E}Input`] },
+  delete: { params: ', id: string', args: '[id]', ret: 'boolean', types: [] },
+}[op.kind];
+-%>
+<% if (sig.types.length > 0) { -%>
+import type { <%= sig.types.join(', ') %> } from '../../model/<%= it.names.entity %>';
+<% } -%>
+import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
+
+/**
+ * <%= op.name %> via storage invoke.
+ */
+export const <%= op.name %> = async (client: CanonicalDataClient<%= sig.params %>): Promise<<%= sig.ret %>> =>
+  invokeCanonicalDataOperation<<%= sig.ret %>>(client, '<%= op.name %>', <%= sig.args %>);

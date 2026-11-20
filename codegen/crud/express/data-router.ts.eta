@@ -1,0 +1,15 @@
+import { Router } from 'express';
+<% for (const crud of it.tables) { -%>
+import { create<%= crud.names.Things %>Router } from '../<%= crud.names.folder %>/router';
+<% } -%>
+
+/**
+ * Mounts every table router under /api/data.
+ */
+export const createDataRouter = (): Router => {
+  const router = Router();
+<% for (const crud of it.tables) { -%>
+  router.use('/<%= crud.names.folder %>', create<%= crud.names.Things %>Router());
+<% } -%>
+  return router;
+};

@@ -1,0 +1,55 @@
+import type { CanonicalDataAccessMode } from './types';
+
+const normalizeBaseUrl = (url: string): string => url.replace(/\/$/, '');
+
+/** Main gateway origin (`http://host:3010`), no project segment. */
+export const readMainGatewayUrl = (): string | null => {
+  const url = process.env.MAIN_GATEWAY_URL?.trim();
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return normalizeBaseUrl(`${parsed.protocol}//${parsed.host}`);
+  } catch {
+    return normalizeBaseUrl(url);
+  }
+};
+
+/** Gateway catalog project id for `/{projectId}/api/...` routes. */
+export const readGatewayProjectId = (): string | null => process.env.MAIN_GATEWAY_PROJECT_ID?.trim() || null;
+
+/** Storage origin for direct mode (default storage port 3080). */
+export const readDirectBackendUrl = (): string | null => {
+  const url = process.env.STORAGE_URL?.trim();
+  return url ? normalizeBaseUrl(url) : null;
+};
+
+export const readDirectBackendSecret = (): string | null => process.env.STORAGE_SECRET?.trim() || null;
+
+export const readDispatcherGateSecret = (): string | null => process.env.DISPATCHER_GATE_SECRET?.trim() || null;
+
+/** CANONICAL_DATA_ACCESS_MODE=direct|gateway, else gateway when its three settings are present. */
+export const readCanonicalDataAccessMode = (): CanonicalDataAccessMode => {
+  const raw = process.env.CANONICAL_DATA_ACCESS_MODE?.trim().toLowerCase();
+  if (raw === 'gateway' || raw === 'direct') return raw;
+  if (readMainGatewayUrl() && readGatewayProjectId() && readDispatcherGateSecret()) return 'gateway';
+  return 'direct';
+};
+
+/** What is missing from .env for the current mode, or null when configured. */
+export const describeCanonicalDataConfigGap = (): string | null => {
+  const missing: string[] = [];
+  if (readCanonicalDataAccessMode() === 'gateway') {
+    if (!readMainGatewayUrl()) missing.push('MAIN_GATEWAY_URL');
+    if (!readGatewayProjectId()) missing.push('MAIN_GATEWAY_PROJECT_ID');
+    if (!readDispatcherGateSecret()) missing.push('DISPATCHER_GATE_SECRET');
+    return missing.length > 0 ? `Gateway mode: set ${missing.join(', ')} in .env` : null;
+  }
+  if (!readDirectBackendUrl()) missing.push('STORAGE_URL');
+  if (!readDirectBackendSecret()) missing.push('STORAGE_SECRET');
+  return missing.length > 0 ? `Direct mode: set ${missing.join(', ')} in .env` : null;
+};
+
+export const readCanonicalDataRequestTimeoutMs = (): number => {
+  const parsed = Number(process.env.CANONICAL_DATA_REQUEST_TIMEOUT_MS?.trim() || 10_000);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10_000;
+};

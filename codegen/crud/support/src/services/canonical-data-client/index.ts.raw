@@ -1,0 +1,4 @@
+export type { CanonicalDataAccessMode, CanonicalDataClient } from './types';
+export { describeCanonicalDataConfigGap, readCanonicalDataAccessMode } from './config';
+export { getManagedCanonicalDataClient } from './get-managed-canonical-data-client';
+export { invokeCanonicalDataOperation } from './invoke-canonical-data-operation';
