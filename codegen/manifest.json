@@ -103,13 +103,6 @@
           "template": "crud/barrel.ts.eta"
         },
         {
-          "id": "process",
-          "path": "src/services/<%= it.names.folder %>/process-<%= it.op.file %>.ts",
-          "each": "operation",
-          "mode": "write",
-          "template": "crud/express/process.ts.eta"
-        },
-        {
           "id": "handler-list",
           "path": "src/services/<%= it.names.folder %>/routes/get-<%= it.names.folder %>-handler.ts",
           "each": "table",
