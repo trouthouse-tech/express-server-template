@@ -11,7 +11,7 @@ BEFORE implementing ANY feature, you MUST:
 |------|---------|
 | **`src/model/{entity}/`** | Table row and write-input types ([008](../architecture/008-domain-models.md)) |
 | **`src/data/{table}/`** | **CRUD only** — one folder per database table, one function per file |
-| **`src/services/{feature}/`** | Routers, handlers, `processX()` action/business logic |
+| **`src/services/{feature}/`** | Routers, handlers, `processX()` business logic (only when it exists) |
 | **`src/services/middleware`**, **`health`**, **`server`** | Cross-cutting (shipped in starter) |
 | **`src/utils/{feature}/`** | Pure helpers used 2+ times |
 
@@ -23,15 +23,15 @@ BEFORE implementing ANY feature, you MUST:
 - MUST use router factory pattern: `createXRouter(): Router`; NEVER export a router instance directly.
 - ALWAYS keep routers thin: route definitions only, no business logic.
 - ALWAYS keep handlers in `src/services/{feature}/routes/` with one handler per file.
-- ALWAYS put action/business logic in `processX()` files in the same `src/services/{feature}/` folder.
+- Create `processX()` files in the same `src/services/{feature}/` folder ONLY when an operation has logic beyond plain CRUD (multi-step writes, cross-table rules, derived values, external or AI calls). NEVER create pass-through `processX()` functions that just forward to a data function.
 - MUST use `type` and NEVER use `interface`.
 
 ## Handlers
 
-- MUST follow: (1) get managed client, (2) validate request, (3) call `processX()`, (4) try/catch, (5) return response.
+- MUST follow: (1) log `📥`, (2) get managed client (null → `500`), (3) validate params, query and body (bad → `400`), (4) call the `src/data/{table}/` function for plain CRUD, or `processX()` only when one exists for real business logic, (5) respond `200` with data, or `404` when get/update/delete finds no row. One try/catch around the whole body logs `❌` and answers `500`.
 - NEVER inline business logic or database queries in handlers.
 - MUST add JSDoc on router factories, handlers, and `processX()` functions.
-- MUST return `{ success: false, error }` with `500` on server errors; `200` / `400` per ADR 006.
+- MUST return `{ success: false, error }` with `500` on server errors; `200` / `400` / `404` per ADR 006.
 
 ## SQL
 

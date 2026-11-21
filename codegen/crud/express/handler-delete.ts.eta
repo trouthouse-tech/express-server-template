@@ -1,12 +1,11 @@
 <%
 const n = it.names;
 const op = it.crud.operations.find((item) => item.kind === 'delete');
-const proc = `process${it.h.upperFirst(op.name)}`;
 const name = `delete${n.Entity}Handler`;
 -%>
 import type { Request, Response } from 'express';
 import { getManagedCanonicalDataClient } from '../../canonical-data-client';
-import { <%= proc %> } from '../process-<%= op.file %>';
+import { <%= op.name %> } from '../../../data/<%= n.folder %>';
 
 /** DELETE /api/data/<%= n.folder %>/:id */
 export const <%= name %> = async (req: Request, res: Response): Promise<void> => {
@@ -22,7 +21,7 @@ export const <%= name %> = async (req: Request, res: Response): Promise<void> =>
       res.status(400).json({ success: false, error: 'id is required' });
       return;
     }
-    const deleted = await <%= proc %>(client, id);
+    const deleted = await <%= op.name %>(client, id);
     if (!deleted) {
       res.status(404).json({ success: false, error: '<%= n.Entity %> not found' });
       return;

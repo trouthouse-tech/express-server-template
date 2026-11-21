@@ -1,14 +1,13 @@
 <%
 const n = it.names;
 const op = it.crud.operations.find((item) => item.kind === 'update');
-const proc = `process${it.h.upperFirst(op.name)}`;
 const name = `patch${n.Entity}Handler`;
 const fields = `[${it.columns.map((column) => `'${column.name}'`).join(', ')}]`;
 -%>
 import type { Request, Response } from 'express';
 import { getManagedCanonicalDataClient } from '../../canonical-data-client';
 import { pickFields } from '../../../utils/http/pick-fields';
-import { <%= proc %> } from '../process-<%= op.file %>';
+import { <%= op.name %> } from '../../../data/<%= n.folder %>';
 
 /** PATCH /api/data/<%= n.folder %>/:id */
 export const <%= name %> = async (req: Request, res: Response): Promise<void> => {
@@ -25,7 +24,7 @@ export const <%= name %> = async (req: Request, res: Response): Promise<void> =>
       res.status(400).json({ success: false, error: 'id and at least one field are required' });
       return;
     }
-    const data = await <%= proc %>(client, id, input as Parameters<typeof <%= proc %>>[2]);
+    const data = await <%= op.name %>(client, id, input as Parameters<typeof <%= op.name %>>[2]);
     if (!data) {
       res.status(404).json({ success: false, error: '<%= n.Entity %> not found' });
       return;

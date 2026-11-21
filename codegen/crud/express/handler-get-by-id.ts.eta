@@ -1,12 +1,11 @@
 <%
 const n = it.names;
 const op = it.crud.operations.find((item) => item.kind === 'get_by_id');
-const proc = `process${it.h.upperFirst(op.name)}`;
 const name = `get${n.Entity}ByIdHandler`;
 -%>
 import type { Request, Response } from 'express';
 import { getManagedCanonicalDataClient } from '../../canonical-data-client';
-import { <%= proc %> } from '../process-<%= op.file %>';
+import { <%= op.name %> } from '../../../data/<%= n.folder %>';
 
 /** GET /api/data/<%= n.folder %>/:id */
 export const <%= name %> = async (req: Request, res: Response): Promise<void> => {
@@ -22,7 +21,7 @@ export const <%= name %> = async (req: Request, res: Response): Promise<void> =>
       res.status(400).json({ success: false, error: 'id is required' });
       return;
     }
-    const data = await <%= proc %>(client, id);
+    const data = await <%= op.name %>(client, id);
     if (!data) {
       res.status(404).json({ success: false, error: '<%= n.Entity %> not found' });
       return;

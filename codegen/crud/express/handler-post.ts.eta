@@ -1,7 +1,6 @@
 <%
 const n = it.names;
 const op = it.crud.operations.find((item) => item.kind === 'create');
-const proc = `process${it.h.upperFirst(op.name)}`;
 const name = `post${n.Entity}Handler`;
 const fields = `[${it.columns.map((column) => `'${column.name}'`).join(', ')}]`;
 const required = it.columns.filter((column) => column.not_null && !column.default_sql.trim()).map((column) => column.name);
@@ -9,7 +8,7 @@ const required = it.columns.filter((column) => column.not_null && !column.defaul
 import type { Request, Response } from 'express';
 import { getManagedCanonicalDataClient } from '../../canonical-data-client';
 import { pickFields } from '../../../utils/http/pick-fields';
-import { <%= proc %> } from '../process-<%= op.file %>';
+import { <%= op.name %> } from '../../../data/<%= n.folder %>';
 
 /** POST /api/data/<%= n.folder %> */
 export const <%= name %> = async (req: Request, res: Response): Promise<void> => {
@@ -28,7 +27,7 @@ export const <%= name %> = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 <% } -%>
-    const data = await <%= proc %>(client, input as Parameters<typeof <%= proc %>>[1]);
+    const data = await <%= op.name %>(client, input as Parameters<typeof <%= op.name %>>[1]);
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error('❌ [<%= n.folder %>.<%= name %>]', error);
