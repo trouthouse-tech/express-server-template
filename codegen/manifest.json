@@ -1131,6 +1131,94 @@
           "raw": true
         },
         {
+          "id": "support:src/model/spawn-credential.ts",
+          "path": "src/model/spawn-credential.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/spawn-credential.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/runtime-credentials/build-child-env.ts",
+          "path": "src/services/runtime-credentials/build-child-env.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/runtime-credentials/build-child-env.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/runtime-credentials/index.ts",
+          "path": "src/services/runtime-credentials/index.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/runtime-credentials/index.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/runtime-credentials/list-declared-credential-names.ts",
+          "path": "src/services/runtime-credentials/list-declared-credential-names.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/runtime-credentials/list-declared-credential-names.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/runtime-credentials/needs-credential-refresh.ts",
+          "path": "src/services/runtime-credentials/needs-credential-refresh.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/runtime-credentials/needs-credential-refresh.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/runtime-credentials/process-replace-stale-credential-workers.ts",
+          "path": "src/services/runtime-credentials/process-replace-stale-credential-workers.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/runtime-credentials/process-replace-stale-credential-workers.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/runtime-credentials/read-secret.ts",
+          "path": "src/services/runtime-credentials/read-secret.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/runtime-credentials/read-secret.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/runtime-credentials/runtime-credential-store.ts",
+          "path": "src/services/runtime-credentials/runtime-credential-store.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/runtime-credentials/runtime-credential-store.ts.raw",
+          "raw": true
+        },
+        {
           "id": "support:src/services/worker-lifecycle/stop-service.ts",
           "path": "src/services/worker-lifecycle/stop-service.ts",
           "each": "once",

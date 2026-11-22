@@ -5,6 +5,7 @@ dotenv.config({ override: true });
 
 import { DEFAULT_PORT } from './src/config/project';
 import { loadRegistry } from './src/services/registry/load-registry';
+import { processReplaceStaleCredentialWorkers } from './src/services/runtime-credentials';
 import { processValidateProductionConfig } from './src/services/security/process-validate-production-config';
 import { setupEarlyMiddleware } from './src/services/middleware';
 import { attachRequestIdMiddleware } from './src/services/middleware/attach-request-id-middleware';
@@ -21,6 +22,7 @@ const bootstrap = async (): Promise<void> => {
 
   processValidateProductionConfig();
   loadRegistry();
+  await processReplaceStaleCredentialWorkers();
 
   setupEarlyMiddleware(app);
   app.use(attachRequestIdMiddleware);

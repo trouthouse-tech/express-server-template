@@ -6,8 +6,11 @@ import { probeServiceHealth } from './probe-service-health';
 import { setRuntimeStatus } from './service-runtime-store';
 import { spawnService } from './spawn-service';
 import { readWorkerManifest, writeWorkerManifest } from './worker-manifest-io';
+import type { RegisteredService } from '../../model/registered-service';
 import { killProcessListeningOnUrl } from '../../utils/worker/kill-process-listening-on-url';
 import { reportSessionStartForService } from '../main-gateway-session-report/report-session-for-service';
+import { needsCredentialRefresh } from '../runtime-credentials';
+import { stopService } from './stop-service';
 
 const healthTimeoutMs = (): number =>
   Number(process.env.DISPATCHER_SPAWN_HEALTH_TIMEOUT_MS ?? 120_000);
@@ -43,6 +46,22 @@ const withServiceMutex = async <T>(serviceId: string, fn: () => Promise<T>): Pro
   } finally {
     release();
   }
+};
+
+/**
+ * A running worker that declares runtime credentials but did not receive them from this process
+ * (dispatcher restarted since it spawned) holds secrets we no longer know: stop it so it respawns
+ * below with fresh credentials.
+ */
+const replaceWorkerWithStaleCredentials = async (service: RegisteredService): Promise<void> => {
+  const manifest = readWorkerManifest(service.id);
+  if (!needsCredentialRefresh(service.id, service.spawn?.credentials, manifest?.pid)) {
+    return;
+  }
+  console.log(
+    `📤 [lifecycle] ${service.id} pid ${manifest?.pid} holds credentials from a previous dispatcher process; replacing`,
+  );
+  await stopService(service.id);
 };
 
 export class ServiceUnavailableError extends Error {
@@ -90,6 +109,8 @@ export const ensureServiceReady = async (
         );
       }
     }
+
+    await replaceWorkerWithStaleCredentials(service);
 
     if (await probeServiceHealth(service)) {
       const manifest = readWorkerManifest(serviceId);

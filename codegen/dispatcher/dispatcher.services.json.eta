@@ -21,7 +21,10 @@
         "env": {
           "PORT": "<%= it.dispatcher.ports.storage %>",
           "STORAGE_BIND_HOST": "127.0.0.1"
-        }
+        },
+        "credentials": [
+          { "name": <%~ it.h.json(it.dispatcher.secrets.storage) %>, "childEnv": "STORAGE_DISPATCHER_SECRET" }
+        ]
       }
     },
     {
@@ -41,7 +44,10 @@
         "env": {
           "PORT": "<%= it.dispatcher.ports.api %>",
           "NODE_ENV": "development"
-        }
+        },
+        "credentials": [
+          { "name": <%~ it.h.json(it.dispatcher.secrets.storage) %>, "childEnv": "STORAGE_SECRET" }
+        ]
       }
     }
   ]

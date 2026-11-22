@@ -1,6 +1,5 @@
 import { API_SERVICE_ID, STORAGE_SERVICE_ID } from '../../config/project';
 import type { RegisteredService } from '../../model/registered-service';
-import { readStorageDispatcherSecret } from '../../services/storage-client/read-storage-dispatcher-secret';
 import { readStorageUpstreamBaseUrl } from '../../services/storage-client/read-storage-service';
 
 const ALLOWED_START = /^npm run (dev|start)$/;
@@ -8,8 +7,9 @@ const ALLOWED_START = /^npm run (dev|start)$/;
 const escapeShellDoubleQuoted = (value: string): string => value.replace(/"/g, '\\"');
 
 /**
- * Registry spawn env plus what the API needs to reach storage directly on loopback:
- * CANONICAL_DATA_ACCESS_MODE=direct, STORAGE_URL and STORAGE_SECRET (never the gate secret).
+ * Non-secret spawn env, exported after the login profile loads: registry spawn env plus what the
+ * API needs to reach storage on loopback (CANONICAL_DATA_ACCESS_MODE=direct, STORAGE_URL).
+ * Secrets (STORAGE_SECRET etc.) arrive via spawn({ env }) as runtime credentials, never here.
  */
 const resolveSpawnEnv = (service: RegisteredService): Record<string, string> => {
   const env = { ...(service.spawn?.env ?? {}) };
@@ -18,23 +18,26 @@ const resolveSpawnEnv = (service: RegisteredService): Record<string, string> => 
   }
   env.CANONICAL_DATA_ACCESS_MODE = 'direct';
   env.STORAGE_URL = env.STORAGE_URL ?? readStorageUpstreamBaseUrl();
-  try {
-    env.STORAGE_SECRET = env.STORAGE_SECRET ?? readStorageDispatcherSecret();
-  } catch (error) {
-    console.warn('⚠️ [spawn] API starts without STORAGE_SECRET:', error instanceof Error ? error.message : error);
-  }
   return env;
 };
 
-/** Gate and gateway settings never reach the API; storage loads DATABASE_URL from its own .env. */
-const spawnEnvUnsetPrefix = (service: RegisteredService): string => {
+/**
+ * Env the child must not inherit from this dispatcher: gate/gateway settings never reach the API;
+ * storage loads DATABASE_URL from its own .env.
+ */
+export const resolveSpawnStripEnv = (service: RegisteredService): string[] => {
   if (service.id === API_SERVICE_ID) {
-    return 'unset DISPATCHER_GATE_SECRET MAIN_GATEWAY_URL MAIN_GATEWAY_PROJECT_ID && ';
+    return [
+      'DISPATCHER_GATE_SECRET',
+      'DISPATCHER_INFRA_ADMIN_SECRET',
+      'MAIN_GATEWAY_URL',
+      'MAIN_GATEWAY_PROJECT_ID',
+    ];
   }
   if (service.id === STORAGE_SERVICE_ID) {
-    return 'unset DATABASE_URL && ';
+    return ['DATABASE_URL'];
   }
-  return '';
+  return [];
 };
 
 /**
@@ -62,8 +65,7 @@ export const buildSpawnShellCommand = (
     .map(([k, v]) => `export ${k}="${escapeShellDoubleQuoted(v)}"`)
     .join(' && ');
   const envPrefix = envPairs ? `${envPairs} && ` : '';
-  const runWorker =
-    `${nvmPrefix}${spawnEnvUnsetPrefix(service)}${envPrefix}cd "${service.spawn.cwd}" && ${service.spawn.startCommand}`;
+  const runWorker = `${nvmPrefix}${envPrefix}cd "${service.spawn.cwd}" && ${service.spawn.startCommand}`;
   return (
     `exec >"${logPath}" 2>&1; ` +
     `echo "[gateway-spawn] $(date -u +%Y-%m-%dT%H:%M:%SZ) starting ${service.id}"; ` +

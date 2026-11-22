@@ -1,0 +1,13 @@
+export { buildChildEnv } from './build-child-env';
+export type { BuildChildEnvOptions } from './build-child-env';
+export { listDeclaredCredentialNames } from './list-declared-credential-names';
+export { needsCredentialRefresh } from './needs-credential-refresh';
+export { processReplaceStaleCredentialWorkers } from './process-replace-stale-credential-workers';
+export { readSecret } from './read-secret';
+export {
+  clearCredentialDelivery,
+  getOrCreateRuntimeCredential,
+  recordCredentialDelivery,
+  resetRuntimeCredentialsForTests,
+  wasCredentialDeliveredTo,
+} from './runtime-credential-store';

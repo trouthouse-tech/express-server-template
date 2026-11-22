@@ -15,7 +15,31 @@ const normalizePathPrefix = (prefix: string): string => {
   return trimmed;
 };
 
-const validateUpstreamAuth = (service: RegisteredService): void => {
+const ENV_VAR_NAME = /^[A-Z_][A-Z0-9_]*$/;
+
+/**
+ * Runtime credentials: valid env-var names, no duplicate childEnv per service.
+ */
+const validateSpawnCredentials = (service: RegisteredService): void => {
+  const seenChildEnv = new Set<string>();
+  for (const credential of service.spawn?.credentials ?? []) {
+    if (!ENV_VAR_NAME.test(credential.name ?? '')) {
+      throw new Error(`spawn.credentials name invalid for ${service.id}: ${credential.name}`);
+    }
+    if (!ENV_VAR_NAME.test(credential.childEnv ?? '')) {
+      throw new Error(`spawn.credentials childEnv invalid for ${service.id}: ${credential.childEnv}`);
+    }
+    if (seenChildEnv.has(credential.childEnv)) {
+      throw new Error(`Duplicate spawn.credentials childEnv ${credential.childEnv} for ${service.id}`);
+    }
+    seenChildEnv.add(credential.childEnv);
+  }
+};
+
+const collectDeclaredCredentialNames = (file: RegistryFile): Set<string> =>
+  new Set(file.services.flatMap((s) => (s.spawn?.credentials ?? []).map((c) => c.name)));
+
+const validateUpstreamAuth = (service: RegisteredService, declaredCredentials: Set<string>): void => {
   const auth = service.upstreamAuth;
   if (auth.mode === 'forward-header' || auth.mode === 'inject-from-env') {
     if (!auth.header?.trim()) {
@@ -26,8 +50,9 @@ const validateUpstreamAuth = (service: RegisteredService): void => {
     if (!auth.envVar?.trim()) {
       throw new Error(`upstreamAuth.envVar required for ${service.id}`);
     }
+    const runtimeIssued = declaredCredentials.has(auth.envVar);
     const value = process.env[auth.envVar]?.trim();
-    if (!value && process.env.NODE_ENV === 'production') {
+    if (!runtimeIssued && !value && process.env.NODE_ENV === 'production') {
       throw new Error(`Missing env ${auth.envVar} for service ${service.id}`);
     }
   }
@@ -83,6 +108,7 @@ export const validateRegistry = (file: RegistryFile): void => {
   const spawnRoots = parseSpawnRoots(process.env.DISPATCHER_SPAWN_ROOTS);
   const prefixMap = new Map<string, string>();
 
+  const declaredCredentials = collectDeclaredCredentialNames(file);
   for (const service of file.services) {
     const prefix = normalizePathPrefix(service.pathPrefix);
     if (prefixMap.has(prefix)) {
@@ -95,7 +121,8 @@ export const validateRegistry = (file: RegistryFile): void => {
     }
 
     assertLoopbackUpstreamUrl(service.upstreamBaseUrl);
-    validateUpstreamAuth(service);
+    validateSpawnCredentials(service);
+    validateUpstreamAuth(service, declaredCredentials);
 
     if (service.spawn) {
       assertStartCommandAllowed(service.spawn.startCommand);

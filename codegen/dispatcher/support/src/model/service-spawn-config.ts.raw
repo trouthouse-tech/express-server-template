@@ -1,6 +1,10 @@
+import type { SpawnCredential } from './spawn-credential';
+
 export type ServiceSpawnConfig = {
   cwd: string;
   startCommand: string;
   env?: Record<string, string>;
   shellInit?: string;
+  /** Runtime-issued secrets injected into the child env at spawn (gateway ADR 015). */
+  credentials?: SpawnCredential[];
 };
