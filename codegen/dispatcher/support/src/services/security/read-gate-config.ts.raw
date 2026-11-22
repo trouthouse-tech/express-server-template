@@ -1,0 +1,53 @@
+import { safeEqualSecret } from '../../utils/http/safe-equal-secret';
+
+export type GateMatchResult = {
+  ok: boolean;
+  callerId: string | null;
+};
+
+const readSingleGateSecret = (): string => process.env.DISPATCHER_GATE_SECRET?.trim() ?? '';
+
+/**
+ * Parses DISPATCHER_GATE_SECRETS JSON map callerId -> secret.
+ */
+export const readGateSecretsMap = (): Record<string, string> => {
+  const raw = process.env.DISPATCHER_GATE_SECRETS?.trim();
+  if (!raw) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return parsed;
+  } catch {
+    console.error('❌ [security] Invalid DISPATCHER_GATE_SECRETS JSON');
+    return {};
+  }
+};
+
+export const gateAuthConfigured = (): boolean => {
+  if (readSingleGateSecret()) {
+    return true;
+  }
+  const map = readGateSecretsMap();
+  return Object.keys(map).length > 0;
+};
+
+/**
+ * Validates x-dispatcher-gate-secret against configured secrets.
+ */
+export const matchGateSecret = (provided: string): GateMatchResult => {
+  if (!provided) {
+    return { ok: false, callerId: null };
+  }
+  const single = readSingleGateSecret();
+  if (single && safeEqualSecret(provided, single)) {
+    return { ok: true, callerId: 'default' };
+  }
+  const map = readGateSecretsMap();
+  for (const [callerId, expected] of Object.entries(map)) {
+    if (expected && safeEqualSecret(provided, expected)) {
+      return { ok: true, callerId };
+    }
+  }
+  return { ok: false, callerId: null };
+};

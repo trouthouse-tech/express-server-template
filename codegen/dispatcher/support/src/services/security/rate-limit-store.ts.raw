@@ -1,0 +1,32 @@
+type Bucket = {
+  count: number;
+  windowStartMs: number;
+};
+
+const buckets = new Map<string, Bucket>();
+
+const windowMs = 60_000;
+
+const limitForKey = (key: string, maxPerMinute: number): boolean => {
+  const now = Date.now();
+  const existing = buckets.get(key);
+  if (!existing || now - existing.windowStartMs >= windowMs) {
+    buckets.set(key, { count: 1, windowStartMs: now });
+    return true;
+  }
+  if (existing.count >= maxPerMinute) {
+    return false;
+  }
+  existing.count += 1;
+  return true;
+};
+
+export const checkProxyRateLimit = (clientIp: string, pathPrefix: string): boolean => {
+  const max = Number(process.env.DISPATCHER_RATE_LIMIT_PROXY_PER_MIN ?? 300);
+  return limitForKey(`proxy:${clientIp}:${pathPrefix}`, max);
+};
+
+export const checkSpawnRateLimit = (serviceId: string): boolean => {
+  const max = Number(process.env.DISPATCHER_RATE_LIMIT_SPAWN_PER_MIN ?? 30);
+  return limitForKey(`spawn:${serviceId}`, max);
+};

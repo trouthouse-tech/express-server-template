@@ -1,0 +1,26 @@
+import path from 'node:path';
+
+/**
+ * Ensures spawn cwd is under one of DISPATCHER_SPAWN_ROOTS.
+ */
+export const assertSpawnCwdAllowed = (cwd: string, roots: string[]): void => {
+  if (roots.length === 0) {
+    throw new Error('DISPATCHER_SPAWN_ROOTS is required when registry defines spawn');
+  }
+  const resolvedCwd = path.resolve(cwd);
+  const allowed = roots.some((root) => {
+    const resolvedRoot = path.resolve(root);
+    return resolvedCwd === resolvedRoot || resolvedCwd.startsWith(`${resolvedRoot}${path.sep}`);
+  });
+  if (!allowed) {
+    throw new Error(`spawn.cwd not under DISPATCHER_SPAWN_ROOTS: ${resolvedCwd}`);
+  }
+};
+
+export const parseSpawnRoots = (raw: string | undefined): string[] => {
+  const trimmed = raw?.trim();
+  if (!trimmed) {
+    return [];
+  }
+  return trimmed.split(',').map((r) => r.trim()).filter((r) => r.length > 0);
+};

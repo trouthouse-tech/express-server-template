@@ -1,0 +1,31 @@
+/**
+ * Setup Early Middleware
+ * Configures CORS, body parsing, and other early middleware
+ */
+
+import cors from 'cors';
+import express, { Express } from 'express';
+import { parseCorsOrigins } from '../../utils/http/parse-cors-origins';
+
+const maxBodyBytes = (): string =>
+  process.env.DISPATCHER_MAX_BODY_BYTES?.trim() || '52428800';
+
+export const setupEarlyMiddleware = (app: Express): void => {
+  const allowedOrigins = parseCorsOrigins();
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new Error(`CORS blocked origin: ${origin}`));
+      },
+      credentials: true,
+    }),
+  );
+
+  app.use(express.json({ limit: maxBodyBytes() }));
+  app.use(express.urlencoded({ extended: true, limit: maxBodyBytes() }));
+};

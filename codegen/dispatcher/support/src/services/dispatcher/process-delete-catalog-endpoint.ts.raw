@@ -1,0 +1,15 @@
+import { deleteDispatcherExposedEndpointViaStorage } from '../storage-client/delete-dispatcher-exposed-endpoint-via-storage';
+import { reloadDispatcherCatalog } from '../registry/load-dispatcher-catalog';
+import { withEphemeralStorageForCatalog } from '../worker-lifecycle/with-ephemeral-storage-for-catalog';
+
+/**
+ * Deletes an exposed endpoint row via storage and reloads the catalog snapshot.
+ */
+export const processDeleteCatalogEndpoint = async (id: string): Promise<boolean> =>
+  withEphemeralStorageForCatalog(async () => {
+    const deleted = await deleteDispatcherExposedEndpointViaStorage(id);
+    if (deleted) {
+      await reloadDispatcherCatalog();
+    }
+    return deleted;
+  });

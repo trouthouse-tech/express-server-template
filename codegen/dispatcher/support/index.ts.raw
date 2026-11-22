@@ -1,0 +1,45 @@
+import express from 'express';
+import dotenv from 'dotenv';
+
+dotenv.config({ override: true });
+
+import { DEFAULT_PORT } from './src/config/project';
+import { loadRegistry } from './src/services/registry/load-registry';
+import { processValidateProductionConfig } from './src/services/security/process-validate-production-config';
+import { setupEarlyMiddleware } from './src/services/middleware';
+import { attachRequestIdMiddleware } from './src/services/middleware/attach-request-id-middleware';
+import { createHealthRouter } from './src/services/health';
+import { createDispatcherRouter } from './src/services/dispatcher/create-dispatcher-router';
+import { createProxyRouter } from './src/services/proxy/create-proxy-router';
+import { setupErrorHandling } from './src/services/middleware';
+import { startServer } from './src/services/server';
+
+const bootstrap = async (): Promise<void> => {
+  const app = express();
+  const PORT = Number(process.env.PORT) || DEFAULT_PORT;
+  const HOST = process.env.DISPATCHER_BIND_HOST?.trim() || '127.0.0.1';
+
+  processValidateProductionConfig();
+  loadRegistry();
+
+  setupEarlyMiddleware(app);
+  app.use(attachRequestIdMiddleware);
+
+  app.use('/', createHealthRouter());
+  app.use('/api/health', createHealthRouter());
+  app.use('/api/dispatcher', createDispatcherRouter());
+  app.use(createProxyRouter());
+
+  setupErrorHandling(app);
+
+  startServer(app, {
+    port: PORT,
+    host: HOST,
+    environment: process.env.NODE_ENV || 'development',
+  });
+};
+
+void bootstrap().catch((error) => {
+  console.error('❌ [startup] Failed to start project dispatcher:', error);
+  process.exit(1);
+});

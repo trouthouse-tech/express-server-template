@@ -1,0 +1,15 @@
+import type { Request, Response } from 'express';
+import { processListServices } from '../process-list-services';
+
+/**
+ * GET /api/dispatcher/services — infra admin.
+ */
+export const getServicesHandler = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const services = await processListServices();
+    res.status(200).json({ success: true, data: services });
+  } catch (error) {
+    console.error('❌ [dispatcher] list services:', error);
+    res.status(500).json({ success: false, error: 'Failed to list services' });
+  }
+};

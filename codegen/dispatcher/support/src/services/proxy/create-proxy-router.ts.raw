@@ -1,0 +1,29 @@
+import { Router } from 'express';
+import { getRegistrySnapshot } from '../registry/registry-snapshot';
+import { ensureDispatcherCatalogLoaded } from '../registry/ensure-dispatcher-catalog-loaded';
+import { processProxyRequest } from './process-proxy-request';
+
+/**
+ * Forwards registered path prefixes to loopback upstreams.
+ */
+export const createProxyRouter = (): Router => {
+  const router = Router();
+
+  router.use(async (req, res, next) => {
+    try {
+      await ensureDispatcherCatalogLoaded();
+      const snapshot = getRegistrySnapshot();
+      const service = snapshot.pathMatcher.match(req.path);
+      if (!service) {
+        next();
+        return;
+      }
+      await processProxyRequest(req, res);
+    } catch (error) {
+      console.error('❌ [proxy] unhandled:', error);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  });
+
+  return router;
+};

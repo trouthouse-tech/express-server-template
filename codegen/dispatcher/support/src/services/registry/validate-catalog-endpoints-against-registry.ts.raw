@@ -1,0 +1,64 @@
+import type {
+  DispatcherCatalogEndpoint,
+  DispatcherCatalogFile,
+  DispatcherCatalogProject,
+} from '../../model/dispatcher-catalog';
+import { getRegistrySnapshot } from './registry-snapshot';
+
+const pathMatchesServicePrefix = (pathOnly: string, pathPrefix: string): boolean => {
+  const prefix = pathPrefix.trim();
+  return pathOnly === prefix || pathOnly.startsWith(`${prefix}/`);
+};
+
+const validateCatalogAgainstRegistry = (catalog: DispatcherCatalogFile): void => {
+  const snapshot = getRegistrySnapshot();
+  for (const project of catalog.projects) {
+    for (const endpoint of project.endpoints) {
+      if (!snapshot.servicesById.has(endpoint.serviceId)) {
+        throw new Error(
+          `Catalog endpoint "${endpoint.id}" references unknown serviceId "${endpoint.serviceId}"`,
+        );
+      }
+      const service = snapshot.servicesById.get(endpoint.serviceId);
+      if (!service) {
+        continue;
+      }
+      const pathOnly = endpoint.path.split('?')[0];
+      if (!pathMatchesServicePrefix(pathOnly, service.pathPrefix)) {
+        throw new Error(
+          `Catalog path "${endpoint.path}" does not match service "${endpoint.serviceId}"`,
+        );
+      }
+      if (service.proxyPathsAllowlist && service.proxyPathsAllowlist.length > 0) {
+        const inAllowlist = service.proxyPathsAllowlist.some(
+          (p) => pathOnly === p || pathOnly.startsWith(`${p}/`),
+        );
+        const inCatalog = project.endpoints.some((item) => item.path === pathOnly);
+        if (!inAllowlist && !inCatalog) {
+          throw new Error(
+            `Catalog path "${endpoint.path}" is not on proxy allowlist for "${endpoint.serviceId}"`,
+          );
+        }
+      }
+    }
+  }
+};
+
+/**
+ * Validates endpoint rows for one project against dispatcher.services.json.
+ */
+export const validateProjectEndpointsAgainstRegistry = (
+  project: DispatcherCatalogProject,
+): void => {
+  validateCatalogAgainstRegistry({ version: 1, projects: [project] });
+};
+
+/**
+ * Validates a single new or updated endpoint in project context.
+ */
+export const validateCatalogEndpointAgainstRegistry = (
+  projectMeta: Omit<DispatcherCatalogProject, 'endpoints'>,
+  endpoints: DispatcherCatalogEndpoint[],
+): void => {
+  validateProjectEndpointsAgainstRegistry({ ...projectMeta, endpoints });
+};

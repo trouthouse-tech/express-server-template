@@ -1,0 +1,24 @@
+import { ensureServiceReady } from '../worker-lifecycle/ensure-service-ready';
+import { pinWorker } from '../worker-lifecycle/ephemeral-worker-hold';
+
+/**
+ * Admin start — ensures service is ready (may spawn dependencies first).
+ */
+export const processStartService = async (
+  serviceId: string,
+): Promise<{ runtimeStatus: string; spawned: boolean; spawnedDependencies: string[] }> => {
+  const result = await ensureServiceReady(serviceId);
+  pinWorker(serviceId);
+  for (const dependencyId of result.spawnedDependencies) {
+    pinWorker(dependencyId);
+  }
+  const spawnedDependencies = [...result.spawnedDependencies];
+  if (result.spawned) {
+    spawnedDependencies.push(serviceId);
+  }
+  return {
+    runtimeStatus: 'healthy',
+    spawned: result.spawned,
+    spawnedDependencies,
+  };
+};

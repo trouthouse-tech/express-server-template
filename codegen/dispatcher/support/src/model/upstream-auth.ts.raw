@@ -1,0 +1,19 @@
+export type UpstreamAuthForwardHeader = {
+  mode: 'forward-header';
+  header: string;
+};
+
+export type UpstreamAuthInjectFromEnv = {
+  mode: 'inject-from-env';
+  header: string;
+  envVar: string;
+};
+
+export type UpstreamAuthNone = {
+  mode: 'none';
+};
+
+export type UpstreamAuth =
+  | UpstreamAuthForwardHeader
+  | UpstreamAuthInjectFromEnv
+  | UpstreamAuthNone;

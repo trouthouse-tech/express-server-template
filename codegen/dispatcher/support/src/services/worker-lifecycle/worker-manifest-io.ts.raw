@@ -1,0 +1,24 @@
+import fs from 'node:fs';
+import type { WorkerManifest } from '../../model/worker-manifest';
+import { getWorkersDir, workerManifestPath } from '../../utils/worker/get-workers-dir';
+
+export const writeWorkerManifest = (manifest: WorkerManifest): void => {
+  fs.mkdirSync(getWorkersDir(), { recursive: true });
+  fs.writeFileSync(workerManifestPath(manifest.serviceId), JSON.stringify(manifest, null, 2), 'utf8');
+};
+
+export const readWorkerManifest = (serviceId: string): WorkerManifest | null => {
+  const filePath = workerManifestPath(serviceId);
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  const raw = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(raw) as WorkerManifest;
+};
+
+export const clearWorkerManifest = (serviceId: string): void => {
+  const filePath = workerManifestPath(serviceId);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+};

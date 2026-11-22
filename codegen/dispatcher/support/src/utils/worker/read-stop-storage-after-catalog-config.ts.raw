@@ -1,0 +1,6 @@
+/**
+ * When true (default), storage is stopped after catalog reads from Postgres via storage HTTP.
+ * Idle reconcile remains the backup safety net.
+ */
+export const readStopStorageAfterCatalog = (): boolean =>
+  process.env.DISPATCHER_STOP_STORAGE_AFTER_CATALOG !== 'false';

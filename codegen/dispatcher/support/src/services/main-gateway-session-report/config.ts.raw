@@ -1,0 +1,16 @@
+/**
+ * Main gateway session report target (on-device-dispatcher :3010).
+ */
+export const readMainGatewaySessionReportConfig = (): {
+  baseUrl: string;
+  projectId: string;
+  gateSecret: string;
+} | null => {
+  const baseUrl = process.env.MAIN_GATEWAY_URL?.trim();
+  const projectId = process.env.MAIN_GATEWAY_PROJECT_ID?.trim();
+  const gateSecret = process.env.DISPATCHER_GATE_SECRET?.trim();
+  if (!baseUrl || !projectId || !gateSecret) {
+    return null;
+  }
+  return { baseUrl, projectId, gateSecret };
+};

@@ -1,0 +1,13 @@
+export type WorkerManifestPhase = 'starting' | 'running' | 'failed' | 'stopped';
+
+export type WorkerManifest = {
+  serviceId: string;
+  pid: number;
+  port: number | null;
+  logPath: string;
+  cwd: string;
+  phase: WorkerManifestPhase;
+  startedAt: string;
+  lastHealthAt?: string;
+  startedBy: 'gateway' | 'external';
+};

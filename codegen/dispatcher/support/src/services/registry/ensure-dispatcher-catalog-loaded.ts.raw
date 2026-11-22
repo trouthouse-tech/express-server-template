@@ -1,0 +1,22 @@
+import { isDispatcherCatalogLoaded } from './dispatcher-catalog-snapshot';
+import { loadDispatcherCatalog } from './load-dispatcher-catalog';
+
+let catalogLoadInFlight: Promise<void> | null = null;
+
+/**
+ * Loads enabled exposed endpoints from storage into memory when not yet loaded.
+ * Concurrent callers share one in-flight load (avoids parallel storage spawns).
+ */
+export const ensureDispatcherCatalogLoaded = async (): Promise<void> => {
+  if (isDispatcherCatalogLoaded()) {
+    return;
+  }
+  if (catalogLoadInFlight) {
+    await catalogLoadInFlight;
+    return;
+  }
+  catalogLoadInFlight = loadDispatcherCatalog().finally(() => {
+    catalogLoadInFlight = null;
+  });
+  await catalogLoadInFlight;
+};

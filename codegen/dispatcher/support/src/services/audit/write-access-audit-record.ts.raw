@@ -1,0 +1,37 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+export type AccessAuditRecord = {
+  timestamp: string;
+  requestId: string;
+  clientIp: string;
+  callerId: string | null;
+  serviceId: string | null;
+  method: string;
+  path: string;
+  statusCode: number;
+  durationMs: number;
+  spawnTriggered: boolean;
+};
+
+const auditLogPath = (): string | null => {
+  const p = process.env.DISPATCHER_AUDIT_LOG_PATH?.trim();
+  return p || null;
+};
+
+/**
+ * Appends one JSON line audit record (no secrets, no bodies).
+ */
+export const writeAccessAuditRecord = (record: AccessAuditRecord): void => {
+  const line = `${JSON.stringify(record)}\n`;
+  console.log(
+    `📤 [audit] ${record.method} ${record.path} ${record.statusCode} ${record.durationMs}ms`,
+  );
+  const filePath = auditLogPath();
+  if (!filePath) {
+    return;
+  }
+  const dir = path.dirname(filePath);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.appendFileSync(filePath, line, 'utf8');
+};

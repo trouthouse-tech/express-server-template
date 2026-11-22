@@ -1,0 +1,15 @@
+import type { NextFunction, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
+import { readSingleHeader } from '../../utils/http/read-single-header';
+
+export const attachRequestIdMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  const existing = readSingleHeader(req.headers['x-request-id']);
+  const id = existing || randomUUID();
+  req.headers['x-request-id'] = id;
+  res.setHeader('x-request-id', id);
+  next();
+};

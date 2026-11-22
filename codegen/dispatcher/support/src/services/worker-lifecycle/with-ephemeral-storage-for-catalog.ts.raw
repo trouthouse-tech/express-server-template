@@ -1,0 +1,21 @@
+import { STORAGE_SERVICE_ID } from '../../config/project';
+import { ensureServiceReady } from './ensure-service-ready';
+import { retainEphemeralWorkers, releaseEphemeralWorkers } from './ephemeral-worker-hold';
+
+/**
+ * Starts storage if needed, runs work, then stops storage when ephemeral catalog mode is on.
+ */
+export const withEphemeralStorageForCatalog = async <T>(work: () => Promise<T>): Promise<T> => {
+  const storageId = STORAGE_SERVICE_ID;
+  await ensureServiceReady(storageId);
+  retainEphemeralWorkers([storageId]);
+  try {
+    return await work();
+  } finally {
+    try {
+      await releaseEphemeralWorkers([storageId], 'catalog');
+    } catch (error) {
+      console.warn(`⚠️ [lifecycle] Stop after catalog failed for ${storageId}:`, error);
+    }
+  }
+};

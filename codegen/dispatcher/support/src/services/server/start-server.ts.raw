@@ -1,0 +1,30 @@
+/**
+ * Start Server
+ * Initializes and starts the Express server
+ */
+
+import type { Express } from 'express';
+import { PROJECT_NAME } from '../../config/project';
+
+type ServerConfig = {
+  port: number;
+  host: string;
+  environment: string;
+};
+
+export const startServer = (app: Express, config: ServerConfig): void => {
+  const { port, host, environment } = config;
+
+  app.listen(port, host, () => {
+    console.log('');
+    console.log('='.repeat(50));
+    console.log(`🚀 ${PROJECT_NAME} project dispatcher`);
+    console.log('='.repeat(50));
+    console.log(`Environment: ${environment}`);
+    console.log(`Bind: ${host}:${port}`);
+    console.log(`Health: http://127.0.0.1:${port}/api/health`);
+    console.log(`Control: http://127.0.0.1:${port}/api/dispatcher/health`);
+    console.log('='.repeat(50));
+    console.log('');
+  });
+};

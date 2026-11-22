@@ -1,0 +1,79 @@
+import { readStopWorkersAfterProxy } from '../../utils/worker/read-stop-workers-after-proxy-config';
+import { readStopStorageAfterCatalog } from '../../utils/worker/read-stop-storage-after-catalog-config';
+import { stopService } from './stop-service';
+
+type ReleaseReason = 'catalog' | 'proxy';
+
+const refCounts = new Map<string, number>();
+const pinnedWorkers = new Set<string>();
+
+/**
+ * Admin start — do not stop this worker after catalog/proxy ephemeral release.
+ */
+export const pinWorker = (serviceId: string): void => {
+  pinnedWorkers.add(serviceId);
+};
+
+/**
+ * Admin stop — allow ephemeral teardown again.
+ */
+export const unpinWorker = (serviceId: string): void => {
+  pinnedWorkers.delete(serviceId);
+};
+
+export const isWorkerPinned = (serviceId: string): boolean => pinnedWorkers.has(serviceId);
+
+const retainOne = (serviceId: string): void => {
+  refCounts.set(serviceId, (refCounts.get(serviceId) ?? 0) + 1);
+};
+
+const releaseOne = async (serviceId: string, reason: ReleaseReason): Promise<void> => {
+  const current = refCounts.get(serviceId) ?? 0;
+  if (current <= 0) {
+    return;
+  }
+  if (current === 1) {
+    refCounts.delete(serviceId);
+  } else {
+    refCounts.set(serviceId, current - 1);
+    return;
+  }
+
+  if (isWorkerPinned(serviceId)) {
+    return;
+  }
+
+  const shouldStop =
+    reason === 'catalog'
+      ? readStopStorageAfterCatalog()
+      : readStopWorkersAfterProxy();
+  if (!shouldStop) {
+    return;
+  }
+
+  await stopService(serviceId);
+  const label =
+    reason === 'catalog' ? 'after catalog read' : 'after proxy';
+  console.log(`📤 [lifecycle] Stopped ${serviceId} ${label}`);
+};
+
+/**
+ * Holds workers for the duration of a catalog read or proxied request burst.
+ */
+export const retainEphemeralWorkers = (serviceIds: string[]): void => {
+  for (const serviceId of serviceIds) {
+    retainOne(serviceId);
+  }
+};
+
+/**
+ * Drops holds; may stop workers when the last hold releases and stop policy allows.
+ */
+export const releaseEphemeralWorkers = async (
+  serviceIds: string[],
+  reason: ReleaseReason,
+): Promise<void> => {
+  for (const serviceId of [...new Set(serviceIds)].reverse()) {
+    await releaseOne(serviceId, reason);
+  }
+};

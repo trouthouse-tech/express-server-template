@@ -1,0 +1,21 @@
+import { DISPATCHER_WEB_PORT } from '../../config/project';
+
+/**
+ * CORS origins from WEB_APP_ORIGIN (the project's dispatcher web).
+ */
+export const parseCorsOrigins = (): string[] => {
+  const origins: string[] = [];
+  const web = process.env.WEB_APP_ORIGIN?.trim();
+  if (web) {
+    origins.push(web);
+  }
+  if (origins.length === 0) {
+    origins.push(
+      `http://localhost:${DISPATCHER_WEB_PORT}`,
+      `http://127.0.0.1:${DISPATCHER_WEB_PORT}`,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    );
+  }
+  return origins;
+};

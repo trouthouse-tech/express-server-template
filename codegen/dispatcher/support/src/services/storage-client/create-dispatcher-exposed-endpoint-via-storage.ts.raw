@@ -1,0 +1,21 @@
+import type {
+  DispatcherExposedEndpoint,
+  InsertDispatcherExposedEndpointInput,
+} from '../../model/dispatcher-exposed-endpoint';
+import { requestStorageApi } from './request-storage-api';
+
+/**
+ * Creates an exposed endpoint row via storage express.
+ */
+export const createDispatcherExposedEndpointViaStorage = async (
+  input: InsertDispatcherExposedEndpointInput,
+): Promise<DispatcherExposedEndpoint> => {
+  const result = await requestStorageApi<{ endpoint: DispatcherExposedEndpoint }>(
+    '/api/storage/dispatcher-exposed-endpoints',
+    { method: 'POST', body: JSON.stringify(input) },
+  );
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+  return result.data.endpoint;
+};

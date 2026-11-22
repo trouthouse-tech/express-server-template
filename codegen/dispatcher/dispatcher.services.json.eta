@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "gatewayPublicPaths": [],
+  "services": [
+    {
+      "id": <%~ it.h.json(it.dispatcher.service_ids.storage) %>,
+      "displayName": <%~ it.h.json(it.dispatcher.name + ' Storage Express') %>,
+      "pathPrefix": "/api/storage",
+      "upstreamBaseUrl": "http://127.0.0.1:<%= it.dispatcher.ports.storage %>",
+      "healthPath": "/api/storage/health",
+      "healthIsPublic": true,
+      "proxyPathsAllowlist": ["/api/storage/health", "/api/storage/meta"],
+      "upstreamAuth": {
+        "mode": "inject-from-env",
+        "header": "x-storage-secret",
+        "envVar": <%~ it.h.json(it.dispatcher.secrets.storage) %>
+      },
+      "spawn": {
+        "cwd": <%~ it.h.json(it.dispatcher.cwd.storage) %>,
+        "startCommand": "npm run start",
+        "env": {
+          "PORT": "<%= it.dispatcher.ports.storage %>",
+          "STORAGE_BIND_HOST": "127.0.0.1"
+        }
+      }
+    },
+    {
+      "id": <%~ it.h.json(it.dispatcher.service_ids.api) %>,
+      "displayName": <%~ it.h.json(it.dispatcher.name + ' API') %>,
+      "pathPrefix": <%~ it.h.json(it.dispatcher.api_path_prefix) %>,
+      "upstreamBaseUrl": "http://127.0.0.1:<%= it.dispatcher.ports.api %>",
+      "healthPath": "/api/health",
+      "dependsOn": [<%~ it.h.json(it.dispatcher.service_ids.storage) %>],
+      "proxyPathsAllowlist": ["/api/health"],
+      "upstreamAuth": {
+        "mode": "none"
+      },
+      "spawn": {
+        "cwd": <%~ it.h.json(it.dispatcher.cwd.express) %>,
+        "startCommand": "npm run start",
+        "env": {
+          "PORT": "<%= it.dispatcher.ports.api %>",
+          "NODE_ENV": "development"
+        }
+      }
+    }
+  ]
+}

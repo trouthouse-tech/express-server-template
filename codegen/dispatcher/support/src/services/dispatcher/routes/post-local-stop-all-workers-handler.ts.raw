@@ -1,0 +1,19 @@
+import type { Request, Response } from 'express';
+import { processStopAllLocalWorkers } from '../process-stop-all-local-workers';
+
+/**
+ * POST /api/dispatcher/local/stop-all-workers — loopback only, no secrets.
+ */
+export const postLocalStopAllWorkersHandler = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const data = await processStopAllLocalWorkers();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to stop workers';
+    console.error('❌ [dispatcher] local stop-all:', message);
+    res.status(500).json({ success: false, error: message });
+  }
+};

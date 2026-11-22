@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "projects": [
+    {
+      "id": <%~ it.h.json(it.dispatcher.project_id) %>,
+      "name": <%~ it.h.json(it.dispatcher.name) %>,
+      "description": <%~ it.h.json(it.dispatcher.description) %>,
+      "repoHint": <%~ it.h.json(it.dispatcher.repos.express) %>
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+import type { Request } from 'express';
+import type { RegisteredService } from '../../model/registered-service';
+
+const resolveUpstreamPath = (service: RegisteredService, requestPath: string): string => {
+  const gatePrefix = service.pathPrefix.replace(/\/$/, '');
+  const upstreamPrefix = service.upstreamPathPrefix?.replace(/\/$/, '');
+  if (!upstreamPrefix || upstreamPrefix === gatePrefix) {
+    return requestPath;
+  }
+  if (requestPath === gatePrefix) {
+    return upstreamPrefix;
+  }
+  if (requestPath.startsWith(`${gatePrefix}/`)) {
+    return `${upstreamPrefix}${requestPath.slice(gatePrefix.length)}`;
+  }
+  return requestPath;
+};
+
+/**
+ * Builds full upstream URL preserving query string.
+ */
+export const buildUpstreamUrl = (service: RegisteredService, req: Request): string => {
+  const base = service.upstreamBaseUrl.replace(/\/$/, '');
+  const path = req.originalUrl.split('?')[0];
+  const upstreamPath = resolveUpstreamPath(service, path);
+  const query = req.originalUrl.includes('?') ? `?${req.originalUrl.split('?')[1]}` : '';
+  return `${base}${upstreamPath}${query}`;
+};

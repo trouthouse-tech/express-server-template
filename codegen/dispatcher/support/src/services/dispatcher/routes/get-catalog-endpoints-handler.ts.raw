@@ -1,0 +1,20 @@
+import type { Request, Response } from 'express';
+import { processListCatalogEndpoints } from '../process-list-catalog-endpoints';
+
+/**
+ * GET /api/dispatcher/catalog/endpoints?projectId=
+ */
+export const getCatalogEndpointsHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+    if (!projectId) {
+      res.status(400).json({ success: false, error: 'projectId query required' });
+      return;
+    }
+    const endpoints = await processListCatalogEndpoints(projectId);
+    res.status(200).json({ success: true, data: { endpoints } });
+  } catch (error) {
+    console.error('❌ [dispatcher.catalog.endpoints] list failed:', error);
+    res.status(500).json({ success: false, error: 'Failed to list catalog endpoints' });
+  }
+};

@@ -1,0 +1,28 @@
+import { DEFAULT_PORT } from '../../config/project';
+import type { DispatcherCatalogResponse } from '../../model/dispatcher-catalog';
+import { getDispatcherCatalogSnapshot } from '../registry/dispatcher-catalog-snapshot';
+import { ensureDispatcherCatalogLoaded } from '../registry/ensure-dispatcher-catalog-loaded';
+import { processListServices } from './process-list-services';
+
+const readGatewayPublicBaseUrl = (): string => {
+  const fromEnv = process.env.DISPATCHER_PUBLIC_BASE_URL?.trim();
+  if (fromEnv) {
+    return fromEnv.replace(/\/+$/, '');
+  }
+  const port = process.env.PORT?.trim() || String(DEFAULT_PORT);
+  return `http://127.0.0.1:${port}`;
+};
+
+/**
+ * Builds dispatcher catalog DTO with live service statuses.
+ */
+export const processGetCatalog = async (): Promise<DispatcherCatalogResponse> => {
+  await ensureDispatcherCatalogLoaded();
+  const catalog = getDispatcherCatalogSnapshot();
+  const services = await processListServices();
+  return {
+    gatewayPublicBaseUrl: readGatewayPublicBaseUrl(),
+    projects: catalog.projects,
+    services,
+  };
+};

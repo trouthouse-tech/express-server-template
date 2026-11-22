@@ -1,0 +1,133 @@
+import type { RegistryFile } from '../../model/registry-file';
+import type { RegisteredService } from '../../model/registered-service';
+import { assertLoopbackUpstreamUrl } from '../../utils/url/assert-loopback-upstream-url';
+import { assertSpawnCwdAllowed, parseSpawnRoots } from '../../utils/spawn/assert-spawn-cwd-allowed';
+import { assertStartCommandAllowed } from '../../utils/spawn/build-spawn-shell-command';
+
+const normalizePathPrefix = (prefix: string): string => {
+  const trimmed = prefix.trim();
+  if (!trimmed.startsWith('/')) {
+    throw new Error(`pathPrefix must start with /: ${prefix}`);
+  }
+  if (trimmed.length > 1 && trimmed.endsWith('/')) {
+    throw new Error(`pathPrefix must not end with /: ${prefix}`);
+  }
+  return trimmed;
+};
+
+const validateUpstreamAuth = (service: RegisteredService): void => {
+  const auth = service.upstreamAuth;
+  if (auth.mode === 'forward-header' || auth.mode === 'inject-from-env') {
+    if (!auth.header?.trim()) {
+      throw new Error(`upstreamAuth.header required for ${service.id}`);
+    }
+  }
+  if (auth.mode === 'inject-from-env') {
+    if (!auth.envVar?.trim()) {
+      throw new Error(`upstreamAuth.envVar required for ${service.id}`);
+    }
+    const value = process.env[auth.envVar]?.trim();
+    if (!value && process.env.NODE_ENV === 'production') {
+      throw new Error(`Missing env ${auth.envVar} for service ${service.id}`);
+    }
+  }
+};
+
+const detectDependencyCycle = (services: RegisteredService[]): void => {
+  const ids = new Set(services.map((s) => s.id));
+  const graph = new Map<string, string[]>();
+  for (const service of services) {
+    const deps = service.dependsOn ?? [];
+    for (const dep of deps) {
+      if (!ids.has(dep)) {
+        throw new Error(`Service "${service.id}" dependsOn unknown id "${dep}"`);
+      }
+      if (dep === service.id) {
+        throw new Error(`Service "${service.id}" cannot depend on itself`);
+      }
+    }
+    graph.set(service.id, deps);
+  }
+
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+
+  const visit = (node: string): void => {
+    if (visited.has(node)) {
+      return;
+    }
+    if (visiting.has(node)) {
+      throw new Error(`Circular dependsOn involving "${node}"`);
+    }
+    visiting.add(node);
+    for (const dep of graph.get(node) ?? []) {
+      visit(dep);
+    }
+    visiting.delete(node);
+    visited.add(node);
+  };
+
+  for (const id of ids) {
+    visit(id);
+  }
+};
+
+/**
+ * Validates registry file shape and security constraints.
+ */
+export const validateRegistry = (file: RegistryFile): void => {
+  if (file.version !== 1) {
+    throw new Error(`Unsupported registry version: ${file.version}`);
+  }
+
+  const spawnRoots = parseSpawnRoots(process.env.DISPATCHER_SPAWN_ROOTS);
+  const prefixMap = new Map<string, string>();
+
+  for (const service of file.services) {
+    const prefix = normalizePathPrefix(service.pathPrefix);
+    if (prefixMap.has(prefix)) {
+      throw new Error(`Duplicate pathPrefix: ${prefix}`);
+    }
+    prefixMap.set(prefix, service.id);
+
+    if (!/^[a-z0-9][a-z0-9-]{1,62}$/.test(service.id)) {
+      throw new Error(`Invalid service id: ${service.id}`);
+    }
+
+    assertLoopbackUpstreamUrl(service.upstreamBaseUrl);
+    validateUpstreamAuth(service);
+
+    if (service.spawn) {
+      assertStartCommandAllowed(service.spawn.startCommand);
+      const isProd = process.env.NODE_ENV === 'production';
+      if (isProd || spawnRoots.length > 0) {
+        assertSpawnCwdAllowed(service.spawn.cwd, spawnRoots);
+      }
+    }
+  }
+
+  detectDependencyCycle(file.services);
+
+  const prefixes = file.services.map((s) => normalizePathPrefix(s.pathPrefix));
+  for (let i = 0; i < prefixes.length; i += 1) {
+    for (let j = i + 1; j < prefixes.length; j += 1) {
+      const a = prefixes[i];
+      const b = prefixes[j];
+      if (a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`)) {
+        throw new Error(`Overlapping pathPrefix: ${a} and ${b}`);
+      }
+    }
+  }
+};
+
+/**
+ * Logs dependsOn edges for startup visibility.
+ */
+export const logRegistryDependencyGraph = (file: RegistryFile): void => {
+  for (const service of file.services) {
+    const deps = service.dependsOn ?? [];
+    if (deps.length > 0) {
+      console.log(`✅ [registry] ${service.id} dependsOn: ${deps.join(', ')}`);
+    }
+  }
+};

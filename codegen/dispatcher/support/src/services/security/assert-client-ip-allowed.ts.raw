@@ -1,0 +1,19 @@
+import type { Request } from 'express';
+import { parseAllowedClientIps } from '../../utils/http/parse-allowed-client-ips';
+
+export const getClientIp = (req: Request): string => {
+  const socket = req.socket;
+  return socket.remoteAddress?.replace(/^::ffff:/, '') ?? '';
+};
+
+/**
+ * Returns false when IP allowlist is set and client is not listed.
+ */
+export const isClientIpAllowed = (req: Request): boolean => {
+  const allowed = parseAllowedClientIps(process.env.DISPATCHER_ALLOWED_CLIENT_IPS);
+  if (!allowed) {
+    return true;
+  }
+  const ip = getClientIp(req);
+  return allowed.has(ip);
+};

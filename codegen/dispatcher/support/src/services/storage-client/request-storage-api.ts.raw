@@ -1,0 +1,42 @@
+import { readStorageDispatcherSecret } from './read-storage-dispatcher-secret';
+import { readStorageUpstreamBaseUrl } from './read-storage-service';
+
+type StorageApiSuccess<T> = {
+  success: true;
+  data: T;
+};
+
+type StorageApiFailure = {
+  success: false;
+  error?: string;
+};
+
+/**
+ * Calls storage express with dispatcher secret (loopback).
+ */
+export const requestStorageApi = async <T>(
+  path: string,
+  init?: RequestInit,
+): Promise<{ ok: true; data: T } | { ok: false; status: number; error: string }> => {
+  const base = readStorageUpstreamBaseUrl();
+  const url = `${base}${path.startsWith('/') ? path : `/${path}`}`;
+  const headers = new Headers(init?.headers);
+  headers.set('x-storage-secret', readStorageDispatcherSecret());
+  if (init?.body !== undefined && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
+
+  const response = await fetch(url, { ...init, headers });
+  const parsed = (await response.json()) as StorageApiSuccess<T> | StorageApiFailure;
+
+  if (!response.ok || !('success' in parsed) || !parsed.success) {
+    const failure = parsed as StorageApiFailure;
+    return {
+      ok: false,
+      status: response.status,
+      error: failure.error ?? `Storage request failed (${response.status})`,
+    };
+  }
+
+  return { ok: true, data: (parsed as StorageApiSuccess<T>).data };
+};

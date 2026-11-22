@@ -1,0 +1,63 @@
+import type {
+  DispatcherExposedEndpoint,
+  UpdateDispatcherExposedEndpointInput,
+} from '../../model/dispatcher-exposed-endpoint';
+import { updateDispatcherExposedEndpointViaStorage } from '../storage-client/update-dispatcher-exposed-endpoint-via-storage';
+import { fetchDispatcherExposedEndpoints } from '../storage-client/fetch-dispatcher-exposed-endpoints';
+import { loadDispatcherProjectsMetadata } from '../registry/load-dispatcher-projects-metadata';
+import { validateCatalogEndpointAgainstRegistry } from '../registry/validate-catalog-endpoints-against-registry';
+import { reloadDispatcherCatalog } from '../registry/load-dispatcher-catalog';
+import { withEphemeralStorageForCatalog } from '../worker-lifecycle/with-ephemeral-storage-for-catalog';
+
+/**
+ * Updates an exposed endpoint row via storage and reloads the catalog snapshot.
+ */
+export const processUpdateCatalogEndpoint = async (
+  id: string,
+  input: UpdateDispatcherExposedEndpointInput,
+): Promise<DispatcherExposedEndpoint | null> =>
+  withEphemeralStorageForCatalog(async () => {
+  const metadata = loadDispatcherProjectsMetadata();
+  let existing: DispatcherExposedEndpoint | undefined;
+  for (const projectMeta of metadata.projects) {
+    const rows = await fetchDispatcherExposedEndpoints(projectMeta.id, { enabledOnly: false });
+    existing = rows.find((row) => row.id === id);
+    if (existing) {
+      break;
+    }
+  }
+  if (!existing) {
+    return null;
+  }
+
+  const projectMeta = metadata.projects.find((p) => p.id === existing.projectId);
+  if (!projectMeta) {
+    throw new Error(`Unknown projectId "${existing.projectId}"`);
+  }
+
+  const merged = {
+    id: existing.id,
+    serviceId: input.serviceId ?? existing.serviceId,
+    method: input.method ?? existing.method,
+    path: input.path ?? existing.path,
+    summary: input.summary ?? existing.summary,
+    requiresBody: input.requiresBody ?? existing.requiresBody,
+  };
+
+  validateCatalogEndpointAgainstRegistry(projectMeta, [
+    {
+      id: merged.id,
+      serviceId: merged.serviceId,
+      method: merged.method,
+      path: merged.path,
+      summary: merged.summary,
+      requiresBody: merged.requiresBody ? true : undefined,
+    },
+  ]);
+
+  const row = await updateDispatcherExposedEndpointViaStorage(id, input);
+  if (row) {
+    await reloadDispatcherCatalog();
+  }
+  return row;
+  });

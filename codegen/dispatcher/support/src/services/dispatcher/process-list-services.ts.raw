@@ -1,0 +1,50 @@
+import type { ServiceRuntimeStatus } from '../../model/service-runtime-status';
+import { getRegistrySnapshot } from '../registry/registry-snapshot';
+import { getRuntimeEntry } from '../worker-lifecycle/service-runtime-store';
+import { clearWorkerManifest, readWorkerManifest } from '../worker-lifecycle/worker-manifest-io';
+import { workerLogPath } from '../../utils/worker/get-workers-dir';
+import { probeServiceHealth } from '../worker-lifecycle/probe-service-health';
+import { resolveListedRuntimePhase } from '../worker-lifecycle/resolve-listed-runtime-phase';
+
+/**
+ * Lists registered services with live runtime status.
+ */
+export const processListServices = async (): Promise<ServiceRuntimeStatus[]> => {
+  const snapshot = getRegistrySnapshot();
+  const results: ServiceRuntimeStatus[] = [];
+
+  for (const service of snapshot.file.services) {
+    const runtime = getRuntimeEntry(service.id);
+    const manifest = readWorkerManifest(service.id);
+    const healthy = await probeServiceHealth(service);
+    let runtimeStatus = resolveListedRuntimePhase(runtime.runtimeStatus, healthy);
+
+    if (service.spawn && !manifest?.pid && runtimeStatus === 'healthy') {
+      runtimeStatus = 'stopped';
+    }
+
+    if (runtime.runtimeStatus === 'stopped' && manifest) {
+      clearWorkerManifest(service.id);
+    }
+
+    const listedPid =
+      runtimeStatus === 'stopped' ? null : manifest?.pid ?? runtime.pid;
+
+    results.push({
+      id: service.id,
+      displayName: service.displayName,
+      pathPrefix: service.pathPrefix,
+      upstreamBaseUrl: service.upstreamBaseUrl,
+      runtimeStatus,
+      spawnEnabled: Boolean(service.spawn),
+      dependsOn: service.dependsOn,
+      spawnCwd: service.spawn?.cwd ?? null,
+      pid: listedPid,
+      logPath: manifest?.logPath ?? workerLogPath(service.id),
+      lastError: runtime.lastError,
+      lastCheckedAt: new Date().toISOString(),
+    });
+  }
+
+  return results;
+};

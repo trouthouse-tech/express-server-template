@@ -1,0 +1,23 @@
+const LOOPBACK_HTTP =
+  /^http:\/\/(127\.0\.0\.1|\[::1\]|localhost)(:\d+)?(\/.*)?$/i;
+
+/**
+ * v1: upstream URLs must be loopback HTTP only.
+ */
+export const assertLoopbackUpstreamUrl = (url: string): void => {
+  const normalized = url.trim();
+  if (!LOOPBACK_HTTP.test(normalized)) {
+    throw new Error(
+      `upstreamBaseUrl must be loopback http (127.0.0.1 or [::1]): ${normalized}`,
+    );
+  }
+};
+
+export const isLoopbackUpstreamUrl = (url: string): boolean => {
+  try {
+    assertLoopbackUpstreamUrl(url);
+    return true;
+  } catch {
+    return false;
+  }
+};

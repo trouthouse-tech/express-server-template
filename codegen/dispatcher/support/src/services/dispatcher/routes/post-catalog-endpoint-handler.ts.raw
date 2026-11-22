@@ -1,0 +1,31 @@
+import type { Request, Response } from 'express';
+import type { InsertDispatcherExposedEndpointInput } from '../../../model/dispatcher-exposed-endpoint';
+import { processCreateCatalogEndpoint } from '../process-create-catalog-endpoint';
+
+/**
+ * POST /api/dispatcher/catalog/endpoints
+ */
+export const postCatalogEndpointHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const body = req.body as Partial<InsertDispatcherExposedEndpointInput>;
+    if (!body.id?.trim() || !body.projectId?.trim() || !body.serviceId?.trim() || !body.method || !body.path?.trim()) {
+      res.status(400).json({ success: false, error: 'id, projectId, serviceId, method, and path are required' });
+      return;
+    }
+    const endpoint = await processCreateCatalogEndpoint({
+      id: body.id.trim(),
+      projectId: body.projectId.trim(),
+      serviceId: body.serviceId.trim(),
+      method: body.method,
+      path: body.path.trim(),
+      summary: body.summary?.trim() ?? '',
+      requiresBody: body.requiresBody,
+      enabled: body.enabled,
+      sortOrder: body.sortOrder,
+    });
+    res.status(200).json({ success: true, data: { endpoint } });
+  } catch (error) {
+    console.error('❌ [dispatcher.catalog.endpoints] create failed:', error);
+    res.status(500).json({ success: false, error: 'Failed to create catalog endpoint' });
+  }
+};

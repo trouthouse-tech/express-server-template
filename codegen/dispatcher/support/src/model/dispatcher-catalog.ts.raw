@@ -1,0 +1,30 @@
+import type { ServiceRuntimeStatus } from './service-runtime-status';
+
+export type DispatcherCatalogEndpoint = {
+  id: string;
+  serviceId: string;
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  path: string;
+  summary: string;
+  sampleQuery?: string;
+  requiresBody?: boolean;
+};
+
+export type DispatcherCatalogProject = {
+  id: string;
+  name: string;
+  description: string;
+  repoHint?: string;
+  endpoints: DispatcherCatalogEndpoint[];
+};
+
+export type DispatcherCatalogFile = {
+  version: 1;
+  projects: DispatcherCatalogProject[];
+};
+
+export type DispatcherCatalogResponse = {
+  gatewayPublicBaseUrl: string;
+  projects: DispatcherCatalogProject[];
+  services: ServiceRuntimeStatus[];
+};

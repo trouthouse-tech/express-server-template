@@ -1,0 +1,41 @@
+import type { ServiceRuntimePhase } from '../../model/service-runtime-status';
+
+type RuntimeEntry = {
+  runtimeStatus: ServiceRuntimePhase;
+  lastError: string | null;
+  lastCheckedAt: string | null;
+  pid: number | null;
+};
+
+const store = new Map<string, RuntimeEntry>();
+
+export const getRuntimeEntry = (serviceId: string): RuntimeEntry => {
+  const existing = store.get(serviceId);
+  if (existing) {
+    return existing;
+  }
+  const entry: RuntimeEntry = {
+    runtimeStatus: 'unknown',
+    lastError: null,
+    lastCheckedAt: null,
+    pid: null,
+  };
+  store.set(serviceId, entry);
+  return entry;
+};
+
+export const setRuntimeStatus = (
+  serviceId: string,
+  runtimeStatus: ServiceRuntimePhase,
+  patch?: Partial<RuntimeEntry>,
+): void => {
+  const entry = getRuntimeEntry(serviceId);
+  entry.runtimeStatus = runtimeStatus;
+  if (patch?.lastError !== undefined) {
+    entry.lastError = patch.lastError;
+  }
+  if (patch?.pid !== undefined) {
+    entry.pid = patch.pid;
+  }
+  entry.lastCheckedAt = new Date().toISOString();
+};

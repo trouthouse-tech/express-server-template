@@ -1,0 +1,30 @@
+import type { Request, Response } from 'express';
+import { getRegistrySnapshot } from '../../registry/registry-snapshot';
+
+/**
+ * GET /api/dispatcher/health — public gateway liveness.
+ */
+export const getDispatcherHealthHandler = (_req: Request, res: Response): void => {
+  try {
+    const snapshot = getRegistrySnapshot();
+    res.status(200).json({
+      success: true,
+      data: {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        registryVersion: snapshot.file.version,
+        serviceCount: snapshot.file.services.length,
+      },
+    });
+  } catch {
+    res.status(200).json({
+      success: true,
+      data: {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        registryVersion: 0,
+        serviceCount: 0,
+      },
+    });
+  }
+};

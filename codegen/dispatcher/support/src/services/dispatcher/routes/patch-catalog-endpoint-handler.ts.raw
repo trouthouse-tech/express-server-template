@@ -1,0 +1,26 @@
+import type { Request, Response } from 'express';
+import type { UpdateDispatcherExposedEndpointInput } from '../../../model/dispatcher-exposed-endpoint';
+import { processUpdateCatalogEndpoint } from '../process-update-catalog-endpoint';
+
+/**
+ * PATCH /api/dispatcher/catalog/endpoints/:id
+ */
+export const patchCatalogEndpointHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    if (!id) {
+      res.status(400).json({ success: false, error: 'id required' });
+      return;
+    }
+    const body = req.body as UpdateDispatcherExposedEndpointInput;
+    const endpoint = await processUpdateCatalogEndpoint(id, body);
+    if (!endpoint) {
+      res.status(404).json({ success: false, error: 'Endpoint not found' });
+      return;
+    }
+    res.status(200).json({ success: true, data: { endpoint } });
+  } catch (error) {
+    console.error('❌ [dispatcher.catalog.endpoints] update failed:', error);
+    res.status(500).json({ success: false, error: 'Failed to update catalog endpoint' });
+  }
+};

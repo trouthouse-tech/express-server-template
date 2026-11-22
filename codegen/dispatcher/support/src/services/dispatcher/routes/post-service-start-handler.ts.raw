@@ -1,0 +1,20 @@
+import type { Request, Response } from 'express';
+import { processStartService } from '../process-start-service';
+
+/**
+ * POST /api/dispatcher/services/:id/start
+ */
+export const postServiceStartHandler = async (req: Request, res: Response): Promise<void> => {
+  const serviceId = String(req.params.id ?? '');
+  if (!serviceId) {
+    res.status(400).json({ success: false, error: 'Missing service id' });
+    return;
+  }
+  try {
+    const data = await processStartService(serviceId);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error('❌ [dispatcher] start service:', error);
+    res.status(500).json({ success: false, error: 'Failed to start service' });
+  }
+};

@@ -1,0 +1,28 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import type { DispatcherCatalogProject } from '../../model/dispatcher-catalog';
+
+export type DispatcherProjectsFile = {
+  version: 1;
+  projects: Array<Omit<DispatcherCatalogProject, 'endpoints'>>;
+};
+
+const defaultProjectsPath = (): string =>
+  process.env.DISPATCHER_PROJECTS_PATH?.trim() ||
+  path.join(process.cwd(), 'dispatcher.projects.json');
+
+/**
+ * Loads dispatcher.projects.json (metadata only; endpoints come from Postgres).
+ */
+export const loadDispatcherProjectsMetadata = (projectsPath?: string): DispatcherProjectsFile => {
+  const filePath = projectsPath ?? defaultProjectsPath();
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Dispatcher projects file not found: ${filePath}`);
+  }
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const parsed = JSON.parse(raw) as DispatcherProjectsFile;
+  if (parsed.version !== 1 || !Array.isArray(parsed.projects)) {
+    throw new Error('Invalid dispatcher projects file shape');
+  }
+  return parsed;
+};
