@@ -6,6 +6,7 @@ import { clearWorkerManifest, readWorkerManifest } from './worker-manifest-io';
 import { killProcessListeningOnUrl } from '../../utils/worker/kill-process-listening-on-url';
 import { reportSessionEndForService } from '../main-gateway-session-report/report-session-for-service';
 import { isWorkerPidNotFound, signalWorkerPid } from '../../utils/worker/signal-worker-pid';
+import { clearCredentialDelivery } from '../runtime-credentials';
 
 const stopGraceMs = (): number => Number(process.env.DISPATCHER_STOP_GRACE_MS ?? 5000);
 
@@ -63,6 +64,7 @@ const stopServiceOnce = async (serviceId: string): Promise<void> => {
     }
   } finally {
     clearWorkerManifest(serviceId);
+    clearCredentialDelivery(serviceId);
     await stopUntrackedListenerIfStillHealthy(service);
     setRuntimeStatus(serviceId, 'stopped', { pid: null });
     await reportSessionEndForService(serviceId);

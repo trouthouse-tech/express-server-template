@@ -25,7 +25,24 @@
         "healthPath": { "type": "string" },
         "healthIsPublic": { "type": "boolean" },
         "upstreamAuth": { "type": "object" },
-        "spawn": { "type": "object" },
+        "spawn": {
+          "type": "object",
+          "properties": {
+            "credentials": {
+              "type": "array",
+              "description": "Runtime-issued secrets: generated in memory by this dispatcher and injected into the child env at spawn. No .env entry needed.",
+              "items": {
+                "type": "object",
+                "required": ["name", "childEnv"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" },
+                  "childEnv": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" }
+                }
+              }
+            }
+          }
+        },
         "proxyPathsAllowlist": { "type": "array", "items": { "type": "string" } },
         "notes": { "type": "string" }
       }

@@ -1,6 +1,7 @@
 import type { IncomingHttpHeaders } from 'node:http';
 import type { RegisteredService } from '../../model/registered-service';
 import { readSingleHeader } from '../../utils/http/read-single-header';
+import { readSecret } from '../runtime-credentials';
 
 const HOP_BY_HOP = new Set([
   'connection',
@@ -31,7 +32,7 @@ export const buildUpstreamHeadersForProbe = (
   const headers: Record<string, string> = { accept: 'application/json' };
   const auth = service.upstreamAuth;
   if (auth.mode === 'inject-from-env') {
-    const value = process.env[auth.envVar]?.trim();
+    const value = readSecret(auth.envVar);
     if (value) {
       headers[auth.header] = value;
     }
@@ -64,7 +65,7 @@ export const buildUpstreamHeaders = (
   const auth = service.upstreamAuth;
   if (auth.mode === 'inject-from-env') {
     delete out[normalizeHeaderName(auth.header)];
-    const value = process.env[auth.envVar]?.trim();
+    const value = readSecret(auth.envVar);
     if (value) {
       out[auth.header] = value;
     }

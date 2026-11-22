@@ -1,7 +1,11 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import type { RegisteredService } from '../../model/registered-service';
-import { buildSpawnShellCommand } from '../../utils/spawn/build-spawn-shell-command';
+import {
+  buildSpawnShellCommand,
+  resolveSpawnStripEnv,
+} from '../../utils/spawn/build-spawn-shell-command';
+import { buildChildEnv, recordCredentialDelivery } from '../runtime-credentials';
 import { getWorkersDir, workerLogPath } from '../../utils/worker/get-workers-dir';
 
 export type SpawnServiceResult = {
@@ -26,13 +30,23 @@ export const spawnService = (service: RegisteredService): SpawnServiceResult => 
   const shellInit = process.env.DISPATCHER_SHELL_INIT?.trim();
   const command = buildSpawnShellCommand(service, logPath, shellInit);
 
+  const env = buildChildEnv({
+    credentials: service.spawn.credentials,
+    stripEnv: resolveSpawnStripEnv(service),
+  });
+
   const child = spawn('/bin/zsh', ['-lc', command], {
     detached: true,
     stdio: 'ignore',
+    env,
   });
 
   if (!child.pid) {
     throw new Error(`Failed to spawn service ${service.id}`);
+  }
+
+  if (service.spawn.credentials?.length) {
+    recordCredentialDelivery(service.id, child.pid);
   }
 
   child.unref();

@@ -1,0 +1,27 @@
+import type { SpawnCredential } from '../../model/spawn-credential';
+import { listDeclaredCredentialNames } from './list-declared-credential-names';
+import { getOrCreateRuntimeCredential } from './runtime-credential-store';
+
+export type BuildChildEnvOptions = {
+  credentials?: SpawnCredential[];
+  /** Extra env names this child must not inherit (e.g. DATABASE_URL for storage). */
+  stripEnv?: string[];
+};
+
+/**
+ * Environment for a spawned child: parent env minus every runtime credential name and `stripEnv`,
+ * plus this child's credentials. Passed via spawn({ env }) so values never appear in `ps`.
+ */
+export const buildChildEnv = (options: BuildChildEnvOptions): NodeJS.ProcessEnv => {
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  for (const name of listDeclaredCredentialNames()) {
+    delete env[name];
+  }
+  for (const name of options.stripEnv ?? []) {
+    delete env[name];
+  }
+  for (const credential of options.credentials ?? []) {
+    env[credential.childEnv] = getOrCreateRuntimeCredential(credential.name);
+  }
+  return env;
+};
