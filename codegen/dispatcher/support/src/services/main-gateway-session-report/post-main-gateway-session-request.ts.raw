@@ -1,0 +1,54 @@
+import { readMainGatewaySessionReportConfig } from './config';
+import type { MainGatewaySessionTier } from './map-registry-service-id-to-tier';
+
+type SessionAction = 'start' | 'activity' | 'end';
+
+export type PostSessionStartBody = {
+  pid?: number;
+  upstreamUrl: string;
+  logPath?: string;
+  spawnTrigger?: string;
+};
+
+let warnedMissingSessionReportConfig = false;
+
+const warnMissingSessionReportConfigOnce = (): void => {
+  if (warnedMissingSessionReportConfig) {
+    return;
+  }
+  warnedMissingSessionReportConfig = true;
+  console.warn(
+    '⚠️ [main-gateway-session-report] Disabled — set MAIN_GATEWAY_URL, MAIN_GATEWAY_PROJECT_ID, and DISPATCHER_GATE_SECRET on this child dispatcher (must match main gateway project gate secret). Worker session rows for storage/api will not appear on the gateway detail page.',
+  );
+};
+
+/**
+ * POST session report to main gateway.
+ */
+export const postMainGatewaySessionRequest = async (
+  tier: MainGatewaySessionTier,
+  action: SessionAction,
+  body?: PostSessionStartBody | { status?: string },
+): Promise<void> => {
+  const config = readMainGatewaySessionReportConfig();
+  if (!config) {
+    warnMissingSessionReportConfigOnce();
+    return;
+  }
+
+  const url = `${config.baseUrl.replace(/\/$/, '')}/api/dispatcher/projects/${config.projectId}/sessions/${tier}/${action}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      'x-dispatcher-gate-secret': config.gateSecret,
+    },
+    body: JSON.stringify(body ?? {}),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Main gateway session ${action} failed (${response.status}): ${text}`);
+  }
+};

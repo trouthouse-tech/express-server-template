@@ -1,0 +1,21 @@
+export type ServiceRuntimePhase =
+  | 'stopped'
+  | 'starting'
+  | 'healthy'
+  | 'failed'
+  | 'unknown';
+
+export type ServiceRuntimeStatus = {
+  id: string;
+  displayName?: string;
+  pathPrefix: string;
+  upstreamBaseUrl: string;
+  runtimeStatus: ServiceRuntimePhase;
+  spawnEnabled: boolean;
+  dependsOn?: string[];
+  spawnCwd?: string | null;
+  pid: number | null;
+  logPath: string | null;
+  lastError: string | null;
+  lastCheckedAt: string | null;
+};

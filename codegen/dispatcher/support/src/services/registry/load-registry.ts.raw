@@ -1,0 +1,26 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import type { RegistryFile } from '../../model/registry-file';
+import { buildRegistrySnapshot, setRegistrySnapshot } from './registry-snapshot';
+import { logRegistryDependencyGraph, validateRegistry } from './validate-registry';
+
+const defaultRegistryPath = (): string =>
+  process.env.DISPATCHER_SERVICES_REGISTRY_PATH?.trim() ||
+  path.join(process.cwd(), 'dispatcher.services.json');
+
+/**
+ * Loads and validates dispatcher.services.json into memory.
+ */
+export const loadRegistry = (registryPath?: string): void => {
+  const filePath = registryPath ?? defaultRegistryPath();
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Registry file not found: ${filePath}`);
+  }
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const parsed = JSON.parse(raw) as RegistryFile;
+  validateRegistry(parsed);
+  logRegistryDependencyGraph(parsed);
+  const snapshot = buildRegistrySnapshot(parsed);
+  setRegistrySnapshot(snapshot);
+  console.log(`✅ [registry] Loaded ${parsed.services.length} service(s) from ${filePath}`);
+};

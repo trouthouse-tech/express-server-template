@@ -1,0 +1,40 @@
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import type { RegisteredService } from '../../model/registered-service';
+import { buildSpawnShellCommand } from '../../utils/spawn/build-spawn-shell-command';
+import { getWorkersDir, workerLogPath } from '../../utils/worker/get-workers-dir';
+
+export type SpawnServiceResult = {
+  pid: number;
+  logPath: string;
+};
+
+/**
+ * Spawns upstream dev server for a registered service.
+ */
+export const spawnService = (service: RegisteredService): SpawnServiceResult => {
+  if (!service.spawn) {
+    throw new Error(`Service ${service.id} has no spawn config`);
+  }
+  const logPath = workerLogPath(service.id);
+  fs.mkdirSync(getWorkersDir(), { recursive: true });
+  try {
+    fs.writeFileSync(logPath, '', 'utf8');
+  } catch {
+    // log may be locked briefly; tail will still append new spawn output
+  }
+  const shellInit = process.env.DISPATCHER_SHELL_INIT?.trim();
+  const command = buildSpawnShellCommand(service, logPath, shellInit);
+
+  const child = spawn('/bin/zsh', ['-lc', command], {
+    detached: true,
+    stdio: 'ignore',
+  });
+
+  if (!child.pid) {
+    throw new Error(`Failed to spawn service ${service.id}`);
+  }
+
+  child.unref();
+  return { pid: child.pid, logPath };
+};

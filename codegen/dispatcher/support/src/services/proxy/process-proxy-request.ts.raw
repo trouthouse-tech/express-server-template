@@ -1,0 +1,184 @@
+import type { Request, Response } from 'express';
+import { writeAccessAuditRecord } from '../audit/write-access-audit-record';
+import { getClientIp, isClientIpAllowed } from '../security/assert-client-ip-allowed';
+import { checkProxyRateLimit } from '../security/rate-limit-store';
+import { matchGateSecret } from '../security/read-gate-config';
+import { getRegistrySnapshot } from '../registry/registry-snapshot';
+import { readSingleHeader } from '../../utils/http/read-single-header';
+import { ensureServiceReady } from '../worker-lifecycle/ensure-service-ready';
+import { buildUpstreamHeaders } from './build-upstream-headers';
+import { buildUpstreamUrl } from './build-upstream-url';
+import { formatServiceUnavailableError } from './format-service-unavailable-error';
+import { formatUpstreamUnreachableError } from './format-upstream-unreachable-error';
+import { reportSessionActivityForService } from '../main-gateway-session-report/report-session-for-service';
+import { ensureDispatcherCatalogLoaded } from '../registry/ensure-dispatcher-catalog-loaded';
+import {
+  retainEphemeralWorkers,
+  releaseEphemeralWorkers,
+} from '../worker-lifecycle/ephemeral-worker-hold';
+import { readStopWorkersAfterProxy } from '../../utils/worker/read-stop-workers-after-proxy-config';
+
+const GATE_HEADER = 'x-dispatcher-gate-secret';
+
+const proxyTimeoutMs = (): number => Number(process.env.DISPATCHER_PROXY_TIMEOUT_MS ?? 120_000);
+
+const requestId = (req: Request): string =>
+  readSingleHeader(req.headers['x-request-id']) || `req-${Date.now()}`;
+
+/**
+ * Proxies HTTP to matched upstream after gate auth and ensureServiceReady.
+ */
+export const processProxyRequest = async (req: Request, res: Response): Promise<void> => {
+  const started = Date.now();
+  const id = requestId(req);
+  res.setHeader('x-request-id', id);
+
+  const path = req.path;
+  await ensureDispatcherCatalogLoaded();
+  const snapshot = getRegistrySnapshot();
+  const service = snapshot.pathMatcher.match(path);
+
+  if (!service) {
+    res.status(404).json({ success: false, error: 'Not found' });
+    return;
+  }
+
+  const isPublic = snapshot.pathMatcher.gatewayPublicPaths.has(path);
+
+  if (!isPublic) {
+    if (!isClientIpAllowed(req)) {
+      const clientIp = getClientIp(req) || 'unknown';
+      res.status(403).json({
+        success: false,
+        error: `Forbidden: client IP ${clientIp} is not listed in DISPATCHER_ALLOWED_CLIENT_IPS`,
+      });
+      return;
+    }
+
+    const gateHeader = readSingleHeader(req.headers[GATE_HEADER]);
+    const gate = matchGateSecret(gateHeader);
+    const insecureAllow = process.env.DISPATCHER_GATE_INSECURE_ALLOW === 'true';
+    if (!gate.ok && !insecureAllow) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
+
+    if (!checkProxyRateLimit(getClientIp(req), service.pathPrefix)) {
+      res.status(429).json({ success: false, error: 'Too many requests' });
+      return;
+    }
+  }
+
+  let spawned = false;
+  let spawnedServiceIds: string[] = [];
+  try {
+    const ready = await ensureServiceReady(service.id);
+    spawned = ready.spawned || ready.spawnedDependencies.length > 0;
+    spawnedServiceIds = [...ready.spawnedDependencies];
+    if (ready.spawned) {
+      spawnedServiceIds.push(service.id);
+    }
+    if (readStopWorkersAfterProxy() && spawnedServiceIds.length > 0) {
+      retainEphemeralWorkers(spawnedServiceIds);
+    }
+  } catch (error) {
+    const readable = formatServiceUnavailableError(service, error);
+    const message = error instanceof Error ? error.message : 'Service unavailable';
+    res.status(503).json({
+      success: false,
+      error: readable,
+      serviceId: service.id,
+      message,
+    });
+    writeAccessAuditRecord({
+      timestamp: new Date().toISOString(),
+      requestId: id,
+      clientIp: getClientIp(req),
+      callerId: null,
+      serviceId: service.id,
+      method: req.method,
+      path,
+      statusCode: 503,
+      durationMs: Date.now() - started,
+      spawnTriggered: false,
+    });
+    return;
+  }
+
+  const url = buildUpstreamUrl(service, req);
+  const headers = buildUpstreamHeaders(service, req.headers);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), proxyTimeoutMs());
+
+  try {
+    const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
+    const body = hasBody && req.body !== undefined ? JSON.stringify(req.body) : undefined;
+    if (body && !headers['content-type']) {
+      headers['content-type'] = 'application/json';
+    }
+
+    const upstream = await fetch(url, {
+      method: req.method,
+      headers,
+      body: body as string | undefined,
+      signal: controller.signal,
+    });
+
+    res.status(upstream.status);
+    const contentType = upstream.headers.get('content-type');
+    if (contentType) {
+      res.setHeader('content-type', contentType);
+    }
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    res.send(buffer);
+
+    if (upstream.status < 500) {
+      await reportSessionActivityForService(service.id);
+    }
+
+    writeAccessAuditRecord({
+      timestamp: new Date().toISOString(),
+      requestId: id,
+      clientIp: getClientIp(req),
+      callerId: null,
+      serviceId: service.id,
+      method: req.method,
+      path,
+      statusCode: upstream.status,
+      durationMs: Date.now() - started,
+      spawnTriggered: spawned,
+    });
+  } catch (error) {
+    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    const displayName = service.displayName ?? service.id;
+    const status = isTimeout ? 504 : 502;
+    const readable = isTimeout
+      ? `Upstream timeout after ${proxyTimeoutMs()}ms (${displayName})`
+      : formatUpstreamUnreachableError(service, error, url);
+    res.status(status).json({
+      success: false,
+      error: readable,
+    });
+    writeAccessAuditRecord({
+      timestamp: new Date().toISOString(),
+      requestId: id,
+      clientIp: getClientIp(req),
+      callerId: null,
+      serviceId: service.id,
+      method: req.method,
+      path,
+      statusCode: status,
+      durationMs: Date.now() - started,
+      spawnTriggered: spawned,
+    });
+  } finally {
+    clearTimeout(timeout);
+    if (readStopWorkersAfterProxy() && spawnedServiceIds.length > 0) {
+      try {
+        await releaseEphemeralWorkers(spawnedServiceIds, 'proxy');
+      } catch (stopError) {
+        console.warn(`⚠️ [lifecycle] Stop after proxy failed:`, stopError);
+      }
+    }
+  }
+};

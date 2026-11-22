@@ -1,0 +1,24 @@
+import type { Request, Response } from 'express';
+import { processDeleteCatalogEndpoint } from '../process-delete-catalog-endpoint';
+
+/**
+ * DELETE /api/dispatcher/catalog/endpoints/:id
+ */
+export const deleteCatalogEndpointHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+    if (!id) {
+      res.status(400).json({ success: false, error: 'id required' });
+      return;
+    }
+    const deleted = await processDeleteCatalogEndpoint(id);
+    if (!deleted) {
+      res.status(404).json({ success: false, error: 'Endpoint not found' });
+      return;
+    }
+    res.status(200).json({ success: true, data: { deleted: true } });
+  } catch (error) {
+    console.error('❌ [dispatcher.catalog.endpoints] delete failed:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete catalog endpoint' });
+  }
+};

@@ -1,0 +1,26 @@
+import { STORAGE_SERVICE_ID } from '../../config/project';
+import { getRegistrySnapshot } from '../registry/registry-snapshot';
+
+/**
+ * Returns the storage service row from the dispatcher registry.
+ */
+export const readStorageServiceFromRegistry = () => {
+  const snapshot = getRegistrySnapshot();
+  const service = snapshot.servicesById.get(STORAGE_SERVICE_ID);
+  if (!service) {
+    throw new Error(`Registry missing service "${STORAGE_SERVICE_ID}"`);
+  }
+  return service;
+};
+
+/**
+ * Loopback base URL for storage express (no trailing slash).
+ */
+export const readStorageUpstreamBaseUrl = (): string => {
+  const service = readStorageServiceFromRegistry();
+  const base = service.upstreamBaseUrl?.trim();
+  if (!base) {
+    throw new Error(`Service "${STORAGE_SERVICE_ID}" has no upstreamBaseUrl`);
+  }
+  return base.replace(/\/+$/, '');
+};

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Smoke test for the <%= it.dispatcher.name %> project dispatcher (port <%= it.dispatcher.ports.dispatcher %>).
+set -euo pipefail
+
+BASE="${BASE:-http://127.0.0.1:<%= it.dispatcher.ports.dispatcher %>}"
+GATE="${GATE:?Set GATE to DISPATCHER_GATE_SECRET}"
+ADMIN="${ADMIN:?Set ADMIN to DISPATCHER_INFRA_ADMIN_SECRET}"
+
+echo "GET $BASE/api/health"
+curl -sS -w "\nHTTP %{http_code}\n" "$BASE/api/health"
+
+echo "GET $BASE/api/dispatcher/catalog (admin)"
+curl -sS -w "\nHTTP %{http_code}\n" \
+  -H "x-dispatcher-admin-secret: $ADMIN" \
+  "$BASE/api/dispatcher/catalog"
+
+echo "GET $BASE/api/storage/health (gate)"
+curl -sS -w "\nHTTP %{http_code}\n" \
+  -H "x-dispatcher-gate-secret: $GATE" \
+  "$BASE/api/storage/health"

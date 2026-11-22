@@ -1,0 +1,33 @@
+import { getRegistrySnapshot } from '../registry/registry-snapshot';
+import { processListServices } from './process-list-services';
+import { processStopService } from './process-stop-service';
+
+export type StopAllLocalWorkersResult = {
+  stoppedServiceIds: string[];
+};
+
+const isRunning = (status: string): boolean => status === 'healthy' || status === 'starting';
+
+/**
+ * Stops every running worker in this project dispatcher registry (storage, API, …).
+ */
+export const processStopAllLocalWorkers = async (): Promise<StopAllLocalWorkersResult> => {
+  const snapshot = getRegistrySnapshot();
+  const listed = await processListServices();
+  const byId = new Map(listed.map((row) => [row.id, row]));
+  const stoppedServiceIds: string[] = [];
+
+  for (const service of [...snapshot.file.services].reverse()) {
+    const row = byId.get(service.id);
+    if (!row) {
+      continue;
+    }
+    if (!isRunning(row.runtimeStatus) && row.pid == null) {
+      continue;
+    }
+    await processStopService(service.id);
+    stoppedServiceIds.push(service.id);
+  }
+
+  return { stoppedServiceIds };
+};

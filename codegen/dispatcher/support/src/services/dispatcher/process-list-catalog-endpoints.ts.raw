@@ -1,0 +1,13 @@
+import type { DispatcherExposedEndpoint } from '../../model/dispatcher-exposed-endpoint';
+import { fetchDispatcherExposedEndpoints } from '../storage-client/fetch-dispatcher-exposed-endpoints';
+import { withEphemeralStorageForCatalog } from '../worker-lifecycle/with-ephemeral-storage-for-catalog';
+
+/**
+ * Lists exposed endpoint rows for a project (admin) via storage HTTP.
+ */
+export const processListCatalogEndpoints = async (
+  projectId: string,
+): Promise<DispatcherExposedEndpoint[]> =>
+  withEphemeralStorageForCatalog(() =>
+    fetchDispatcherExposedEndpoints(projectId, { enabledOnly: false }),
+  );

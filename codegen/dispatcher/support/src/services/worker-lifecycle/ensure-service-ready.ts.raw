@@ -1,0 +1,188 @@
+import { readWorkerLogTail } from '../../utils/worker/read-worker-log-tail';
+import { workerLogPath } from '../../utils/worker/get-workers-dir';
+import { checkSpawnRateLimit } from '../security/rate-limit-store';
+import { getRegistrySnapshot } from '../registry/registry-snapshot';
+import { probeServiceHealth } from './probe-service-health';
+import { setRuntimeStatus } from './service-runtime-store';
+import { spawnService } from './spawn-service';
+import { readWorkerManifest, writeWorkerManifest } from './worker-manifest-io';
+import { killProcessListeningOnUrl } from '../../utils/worker/kill-process-listening-on-url';
+import { reportSessionStartForService } from '../main-gateway-session-report/report-session-for-service';
+
+const healthTimeoutMs = (): number =>
+  Number(process.env.DISPATCHER_SPAWN_HEALTH_TIMEOUT_MS ?? 120_000);
+
+const healthPollMs = (): number => Number(process.env.DISPATCHER_HEALTH_POLL_MS ?? 500);
+
+const maxConcurrentStarts = (): number =>
+  Number(process.env.DISPATCHER_MAX_CONCURRENT_STARTS ?? 2);
+
+let globalStartsInFlight = 0;
+
+const mutexes = new Map<string, Promise<void>>();
+const ensurePromises = new Map<
+  string,
+  Promise<{ spawned: boolean; spawnedDependencies: string[] }>
+>();
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const withServiceMutex = async <T>(serviceId: string, fn: () => Promise<T>): Promise<T> => {
+  const previous = mutexes.get(serviceId) ?? Promise.resolve();
+  let release: () => void = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  mutexes.set(serviceId, previous.then(() => gate));
+  await previous;
+  try {
+    return await fn();
+  } finally {
+    release();
+  }
+};
+
+export class ServiceUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ServiceUnavailableError';
+  }
+}
+
+export type EnsureServiceReadyResult = {
+  spawned: boolean;
+  spawnedDependencies: string[];
+};
+
+/**
+ * Ensures upstream is healthy; spawns when configured and down.
+ */
+export const ensureServiceReady = async (
+  serviceId: string,
+): Promise<EnsureServiceReadyResult> => {
+  const existing = ensurePromises.get(serviceId);
+  if (existing) {
+    return existing;
+  }
+
+  const promise = withServiceMutex(serviceId, async () => {
+    const snapshot = getRegistrySnapshot();
+    const service = snapshot.servicesById.get(serviceId);
+    if (!service) {
+      throw new ServiceUnavailableError(`Unknown service: ${serviceId}`);
+    }
+
+    const spawnedDependencies: string[] = [];
+    for (const depId of service.dependsOn ?? []) {
+      try {
+        const depResult = await ensureServiceReady(depId);
+        spawnedDependencies.push(...depResult.spawnedDependencies);
+        if (depResult.spawned) {
+          spawnedDependencies.push(depId);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new ServiceUnavailableError(
+          `Dependency ${depId} failed for ${serviceId}: ${message}`,
+        );
+      }
+    }
+
+    if (await probeServiceHealth(service)) {
+      const manifest = readWorkerManifest(serviceId);
+      if (manifest?.pid) {
+        setRuntimeStatus(serviceId, 'healthy', { pid: manifest.pid });
+        await reportSessionStartForService(service, {
+          pid: manifest.pid,
+          logPath: manifest.logPath,
+        });
+        return { spawned: false, spawnedDependencies };
+      }
+      console.warn(
+        `⚠️ [lifecycle] ${serviceId} upstream healthy but no worker manifest; replacing listener`,
+      );
+      killProcessListeningOnUrl(service.upstreamBaseUrl);
+      await sleep(500);
+    }
+
+    if (!service.spawn) {
+      setRuntimeStatus(serviceId, 'failed', {
+        lastError: 'Upstream down and spawn not configured',
+      });
+      throw new ServiceUnavailableError(`Upstream not available: ${serviceId}`);
+    }
+
+    if (globalStartsInFlight >= maxConcurrentStarts()) {
+      throw new ServiceUnavailableError('Too many concurrent service starts');
+    }
+
+    globalStartsInFlight += 1;
+    setRuntimeStatus(serviceId, 'starting');
+    console.log(`🚀 [lifecycle] Spawning ${serviceId}`);
+
+    let pid = 0;
+    let logPath = workerLogPath(serviceId);
+    try {
+      if (!checkSpawnRateLimit(serviceId)) {
+        throw new ServiceUnavailableError('Spawn rate limit exceeded');
+      }
+      const spawned = spawnService(service);
+      pid = spawned.pid;
+      logPath = spawned.logPath;
+      writeWorkerManifest({
+        serviceId: service.id,
+        pid,
+        port: null,
+        logPath,
+        cwd: service.spawn.cwd,
+        phase: 'starting',
+        startedAt: new Date().toISOString(),
+        startedBy: 'gateway',
+      });
+      setRuntimeStatus(serviceId, 'starting', { pid });
+
+      const started = Date.now();
+      while (Date.now() - started < healthTimeoutMs()) {
+        if (await probeServiceHealth(service)) {
+          writeWorkerManifest({
+            serviceId: service.id,
+            pid,
+            port: null,
+            logPath,
+            cwd: service.spawn.cwd,
+            phase: 'running',
+            startedAt: new Date().toISOString(),
+            lastHealthAt: new Date().toISOString(),
+            startedBy: 'gateway',
+          });
+          setRuntimeStatus(serviceId, 'healthy', { pid });
+          await reportSessionStartForService(service, {
+            pid,
+            logPath,
+            spawnTrigger: 'child_proxy',
+          });
+          console.log(`✅ [lifecycle] ${serviceId} healthy`);
+          return { spawned: true, spawnedDependencies };
+        }
+        await sleep(healthPollMs());
+      }
+
+      const tail = readWorkerLogTail(logPath, 40);
+      const message = `Health timeout for ${serviceId}${tail ? `\n${tail}` : ''}`;
+      setRuntimeStatus(serviceId, 'failed', { lastError: message, pid });
+      throw new ServiceUnavailableError(message);
+    } finally {
+      globalStartsInFlight = Math.max(0, globalStartsInFlight - 1);
+    }
+  });
+
+  ensurePromises.set(serviceId, promise);
+  try {
+    return await promise;
+  } finally {
+    ensurePromises.delete(serviceId);
+  }
+};

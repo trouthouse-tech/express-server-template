@@ -14,6 +14,10 @@ ADRs for **express-server-template** and apps created from it.
 8. [008 – Domain models (`src/model`)](./008-domain-models.md) — table row + write-input types in `src/model/{entity}/`; never `src/data/{table}/types.ts`.
 9. [009 – Stripe Checkout one-time payment](./009-stripe-checkout-one-time-payment.md) — hosted `mode: "payment"`, webhook + complete, grant once when paid.
 10. [010 – No SQL functions](./010-no-sql-functions.md) — tables, indexes, grants, RLS only; `updated_at` in CRUD.
+11. [011 – Project dispatcher role](./011-project-dispatcher-role.md) — `dispatcher` repos: loopback dispatcher that spawns and proxies storage + API for the main gateway; generic code plus `src/config/project.ts`.
+12. [012 – Dispatcher registry and catalog](./012-dispatcher-registry-and-catalog.md) — `dispatcher.services.json` services; exposed paths are storage rows, validated against registry prefixes.
+13. [013 – Dispatcher secrets per hop](./013-dispatcher-secrets-per-hop.md) — gate, admin and storage secrets per hop; env var names only.
+14. [014 – Dispatcher naming and ports](./014-dispatcher-naming-and-ports.md) — `{project}-storage` / `-api` / `-dispatcher` ids, four loopback ports from Code Control, spawn folders under `STUDIO_REPOS_ROOT`.
 
 ## How to use
 

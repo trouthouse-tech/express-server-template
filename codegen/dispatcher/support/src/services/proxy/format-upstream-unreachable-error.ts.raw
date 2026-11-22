@@ -1,0 +1,30 @@
+import path from 'node:path';
+import type { RegisteredService } from '../../model/registered-service';
+
+const readCause = (error: unknown): string => {
+  if (error instanceof Error) {
+    const withCause = error as Error & { cause?: unknown };
+    if (withCause.cause instanceof Error) {
+      return withCause.cause.message;
+    }
+    return error.message;
+  }
+  return String(error);
+};
+
+/**
+ * Human-readable message when loopback upstream fetch fails.
+ */
+export const formatUpstreamUnreachableError = (
+  service: RegisteredService,
+  error: unknown,
+  requestUrl?: string,
+): string => {
+  const displayName = service.displayName ?? service.id;
+  const target = requestUrl ?? service.upstreamBaseUrl;
+  const cause = readCause(error);
+  const repoHint = service.spawn?.cwd
+    ? path.basename(service.spawn.cwd)
+    : displayName;
+  return `${displayName} unreachable at ${target} (${cause}). Start ${repoHint} on that host/port or press Start on the dispatcher page.`;
+};

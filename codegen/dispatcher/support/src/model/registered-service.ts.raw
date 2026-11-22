@@ -1,0 +1,18 @@
+import type { ServiceSpawnConfig } from './service-spawn-config';
+import type { UpstreamAuth } from './upstream-auth';
+
+export type RegisteredService = {
+  id: string;
+  displayName?: string;
+  pathPrefix: string;
+  /** When set, upstream receives this prefix + remainder after pathPrefix (e.g. gate `/api/my-project/storage` → storage `/api/storage`). */
+  upstreamPathPrefix?: string;
+  upstreamBaseUrl: string;
+  healthPath: string;
+  healthIsPublic?: boolean;
+  upstreamAuth: UpstreamAuth;
+  spawn?: ServiceSpawnConfig;
+  proxyPathsAllowlist?: string[];
+  dependsOn?: string[];
+  notes?: string;
+};

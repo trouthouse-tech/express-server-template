@@ -1,0 +1,12 @@
+/**
+ * Turns storage HTTP/Postgres errors into operator-facing catalog load messages.
+ */
+export const formatStorageCatalogError = (raw: string): string => {
+  if (raw.includes('dispatcher_exposed_endpoints') && raw.includes('does not exist')) {
+    return (
+      `${raw} — Apply storage migrations in code-generator-storage-server ` +
+      `(dispatcher_exposed_endpoints migration) against DATABASE_URL in storage .env.`
+    );
+  }
+  return raw;
+};

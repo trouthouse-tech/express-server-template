@@ -1,0 +1,14 @@
+export type MainGatewaySessionTier = 'storage' | 'api';
+
+/**
+ * Maps child registry service id to main gateway session tier.
+ */
+export const mapRegistryServiceIdToTier = (serviceId: string): MainGatewaySessionTier | null => {
+  if (serviceId.endsWith('-storage')) {
+    return 'storage';
+  }
+  if (serviceId.endsWith('-api')) {
+    return 'api';
+  }
+  return null;
+};

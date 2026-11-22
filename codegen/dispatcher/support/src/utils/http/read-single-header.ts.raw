@@ -1,0 +1,12 @@
+/**
+ * Reads a single header value when Express may provide string | string[].
+ */
+export const readSingleHeader = (value: string | string[] | undefined): string => {
+  if (!value) {
+    return '';
+  }
+  if (Array.isArray(value)) {
+    return value[0]?.trim() ?? '';
+  }
+  return value.trim();
+};

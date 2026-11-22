@@ -1,0 +1,16 @@
+import type { Request, Response } from 'express';
+import { processGetCatalog } from '../process-get-catalog';
+
+/**
+ * GET /api/dispatcher/catalog
+ */
+export const getCatalogHandler = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const data = await processGetCatalog();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load catalog';
+    console.error('❌ [dispatcher] catalog:', message);
+    res.status(500).json({ success: false, error: message });
+  }
+};

@@ -1,0 +1,29 @@
+import { gateAuthConfigured } from './read-gate-config';
+import { readInfraAdminSecret } from './read-infra-admin-secret';
+
+/**
+ * Fail closed in production when required secrets missing.
+ */
+export const processValidateProductionConfig = (): void => {
+  const env = process.env.NODE_ENV?.trim() ?? 'development';
+  const insecureAllow = process.env.DISPATCHER_GATE_INSECURE_ALLOW === 'true';
+
+  if (env === 'production') {
+    if (!gateAuthConfigured()) {
+      console.error('❌ [startup] DISPATCHER_GATE_SECRET or DISPATCHER_GATE_SECRETS required in production');
+      process.exit(1);
+    }
+    if (!readInfraAdminSecret()) {
+      console.error('❌ [startup] DISPATCHER_INFRA_ADMIN_SECRET required in production');
+      process.exit(1);
+    }
+  } else if (!gateAuthConfigured() && !insecureAllow) {
+    console.warn(
+      '⚠️ [startup] Gate auth not configured — set DISPATCHER_GATE_SECRET or DISPATCHER_GATE_INSECURE_ALLOW=true',
+    );
+  }
+
+  if (!process.env.DISPATCHER_ALLOWED_CLIENT_IPS?.trim()) {
+    console.warn('⚠️ [startup] DISPATCHER_ALLOWED_CLIENT_IPS unset — all client IPs allowed');
+  }
+};

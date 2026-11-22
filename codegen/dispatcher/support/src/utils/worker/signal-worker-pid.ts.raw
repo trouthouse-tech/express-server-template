@@ -1,0 +1,25 @@
+const isProcessNotFound = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  (error as NodeJS.ErrnoException).code === 'ESRCH';
+
+/**
+ * Signals a detached spawn worker; prefers the process group leader (-pid) on Unix.
+ */
+export const signalWorkerPid = (pid: number, signal: NodeJS.Signals): void => {
+  try {
+    process.kill(-pid, signal);
+    return;
+  } catch (error) {
+    if (!isProcessNotFound(error)) {
+      throw error;
+    }
+  }
+  process.kill(pid, signal);
+};
+
+/**
+ * True when kill returned ESRCH for both process group and direct pid.
+ */
+export const isWorkerPidNotFound = (error: unknown): boolean => isProcessNotFound(error);

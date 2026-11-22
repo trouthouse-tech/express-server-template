@@ -1,0 +1,18 @@
+import { requestStorageApi } from './request-storage-api';
+
+/**
+ * Deletes an exposed endpoint row via storage express.
+ */
+export const deleteDispatcherExposedEndpointViaStorage = async (id: string): Promise<boolean> => {
+  const result = await requestStorageApi<{ deleted: boolean }>(
+    `/api/storage/dispatcher-exposed-endpoints/${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+  );
+  if (!result.ok) {
+    if (result.status === 404) {
+      return false;
+    }
+    throw new Error(result.error);
+  }
+  return result.data.deleted;
+};

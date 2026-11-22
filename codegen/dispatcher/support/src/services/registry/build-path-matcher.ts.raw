@@ -1,0 +1,47 @@
+import type { RegisteredService } from '../../model/registered-service';
+import { isCatalogGatewayPathAllowed } from './dispatcher-catalog-snapshot';
+
+export type PathMatcher = {
+  match: (requestPath: string) => RegisteredService | null;
+  gatewayPublicPaths: Set<string>;
+};
+
+const normalizePrefix = (prefix: string): string => prefix.trim();
+
+/**
+ * Longest pathPrefix wins.
+ */
+export const buildPathMatcher = (
+  services: RegisteredService[],
+  gatewayPublicPaths: string[] = [],
+): PathMatcher => {
+  const sorted = [...services].sort(
+    (a, b) => normalizePrefix(b.pathPrefix).length - normalizePrefix(a.pathPrefix).length,
+  );
+
+  const match = (requestPath: string): RegisteredService | null => {
+    const path = requestPath.split('?')[0];
+    for (const service of sorted) {
+      const prefix = normalizePrefix(service.pathPrefix);
+      if (path === prefix || path.startsWith(`${prefix}/`)) {
+        if (service.proxyPathsAllowlist && service.proxyPathsAllowlist.length > 0) {
+          const allowed =
+            isCatalogGatewayPathAllowed(path) ||
+            service.proxyPathsAllowlist.some(
+              (p) => path === p || path.startsWith(`${p}/`),
+            );
+          if (!allowed) {
+            continue;
+          }
+        }
+        return service;
+      }
+    }
+    return null;
+  };
+
+  return {
+    match,
+    gatewayPublicPaths: new Set(gatewayPublicPaths),
+  };
+};

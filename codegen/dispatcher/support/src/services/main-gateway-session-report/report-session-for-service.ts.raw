@@ -1,0 +1,59 @@
+import type { RegisteredService } from '../../model/registered-service';
+import { mapRegistryServiceIdToTier } from './map-registry-service-id-to-tier';
+import { postMainGatewaySessionRequest } from './post-main-gateway-session-request';
+
+/**
+ * Reports session start/reuse to main gateway for storage/api workers.
+ */
+export const reportSessionStartForService = async (
+  service: RegisteredService,
+  input: { pid?: number; logPath?: string; spawnTrigger?: string },
+): Promise<void> => {
+  const tier = mapRegistryServiceIdToTier(service.id);
+  if (!tier) {
+    return;
+  }
+  try {
+    await postMainGatewaySessionRequest(tier, 'start', {
+      upstreamUrl: service.upstreamBaseUrl,
+      pid: input.pid,
+      logPath: input.logPath,
+      spawnTrigger: input.spawnTrigger ?? 'child_proxy',
+    });
+  } catch (error) {
+    console.warn('⚠️ [main-gateway-session-report] start failed', service.id, error);
+  }
+};
+
+/**
+ * Reports session activity to main gateway.
+ */
+export const reportSessionActivityForService = async (serviceId: string): Promise<void> => {
+  const tier = mapRegistryServiceIdToTier(serviceId);
+  if (!tier) {
+    return;
+  }
+  try {
+    await postMainGatewaySessionRequest(tier, 'activity');
+  } catch (error) {
+    console.warn('⚠️ [main-gateway-session-report] activity failed', serviceId, error);
+  }
+};
+
+/**
+ * Reports session end to main gateway.
+ */
+export const reportSessionEndForService = async (
+  serviceId: string,
+  status: 'stopped' | 'failed' = 'stopped',
+): Promise<void> => {
+  const tier = mapRegistryServiceIdToTier(serviceId);
+  if (!tier) {
+    return;
+  }
+  try {
+    await postMainGatewaySessionRequest(tier, 'end', { status });
+  } catch (error) {
+    console.warn('⚠️ [main-gateway-session-report] end failed', serviceId, error);
+  }
+};

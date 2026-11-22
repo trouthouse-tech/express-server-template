@@ -1,0 +1,35 @@
+import type { RegisteredService } from '../../model/registered-service';
+import { buildUpstreamHeadersForProbe } from '../proxy/build-upstream-headers';
+
+const probeTimeoutMs = (): number =>
+  Number(process.env.DISPATCHER_HEALTH_PROBE_TIMEOUT_MS ?? 3000);
+
+/**
+ * GET health against upstream; returns true when response looks healthy.
+ */
+export const probeServiceHealth = async (service: RegisteredService): Promise<boolean> => {
+  const url = `${service.upstreamBaseUrl.replace(/\/$/, '')}${service.healthPath}`;
+  const headers = buildUpstreamHeadersForProbe(service);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), probeTimeoutMs());
+  try {
+    const response = await fetch(url, { method: 'GET', headers, signal: controller.signal });
+    if (!response.ok) {
+      return false;
+    }
+    const text = await response.text();
+    if (text.includes('"success":true') || text.includes('"status":"ok"')) {
+      return true;
+    }
+    try {
+      const json = JSON.parse(text) as { success?: boolean; status?: string };
+      return json.success === true || json.status === 'ok';
+    } catch {
+      return false;
+    }
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+};

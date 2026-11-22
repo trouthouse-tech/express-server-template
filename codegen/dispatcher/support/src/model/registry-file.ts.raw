@@ -1,0 +1,7 @@
+import type { RegisteredService } from './registered-service';
+
+export type RegistryFile = {
+  version: 1;
+  gatewayPublicPaths?: string[];
+  services: RegisteredService[];
+};

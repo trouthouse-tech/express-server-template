@@ -1,0 +1,38 @@
+import type {
+  DispatcherExposedEndpoint,
+  InsertDispatcherExposedEndpointInput,
+} from '../../model/dispatcher-exposed-endpoint';
+import { createDispatcherExposedEndpointViaStorage } from '../storage-client/create-dispatcher-exposed-endpoint-via-storage';
+import { loadDispatcherProjectsMetadata } from '../registry/load-dispatcher-projects-metadata';
+import { validateCatalogEndpointAgainstRegistry } from '../registry/validate-catalog-endpoints-against-registry';
+import { reloadDispatcherCatalog } from '../registry/load-dispatcher-catalog';
+import { withEphemeralStorageForCatalog } from '../worker-lifecycle/with-ephemeral-storage-for-catalog';
+
+/**
+ * Creates an exposed endpoint row via storage and reloads the catalog snapshot.
+ */
+export const processCreateCatalogEndpoint = async (
+  input: InsertDispatcherExposedEndpointInput,
+): Promise<DispatcherExposedEndpoint> =>
+  withEphemeralStorageForCatalog(async () => {
+  const metadata = loadDispatcherProjectsMetadata();
+  const projectMeta = metadata.projects.find((p) => p.id === input.projectId);
+  if (!projectMeta) {
+    throw new Error(`Unknown projectId "${input.projectId}"`);
+  }
+
+  validateCatalogEndpointAgainstRegistry(projectMeta, [
+    {
+      id: input.id,
+      serviceId: input.serviceId,
+      method: input.method,
+      path: input.path,
+      summary: input.summary,
+      requiresBody: input.requiresBody ? true : undefined,
+    },
+  ]);
+
+  const row = await createDispatcherExposedEndpointViaStorage(input);
+  await reloadDispatcherCatalog();
+  return row;
+  });

@@ -1,0 +1,31 @@
+import type { RegistryFile } from '../../model/registry-file';
+import type { RegisteredService } from '../../model/registered-service';
+import { buildPathMatcher, type PathMatcher } from './build-path-matcher';
+
+export type RegistrySnapshot = {
+  file: RegistryFile;
+  servicesById: Map<string, RegisteredService>;
+  pathMatcher: PathMatcher;
+};
+
+export const buildRegistrySnapshot = (file: RegistryFile): RegistrySnapshot => {
+  const servicesById = new Map<string, RegisteredService>();
+  for (const service of file.services) {
+    servicesById.set(service.id, service);
+  }
+  const pathMatcher = buildPathMatcher(file.services, file.gatewayPublicPaths ?? []);
+  return { file, servicesById, pathMatcher };
+};
+
+let currentSnapshot: RegistrySnapshot | null = null;
+
+export const setRegistrySnapshot = (snapshot: RegistrySnapshot): void => {
+  currentSnapshot = snapshot;
+};
+
+export const getRegistrySnapshot = (): RegistrySnapshot => {
+  if (!currentSnapshot) {
+    throw new Error('Registry not loaded');
+  }
+  return currentSnapshot;
+};

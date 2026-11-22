@@ -1,0 +1,61 @@
+import type {
+  DispatcherCatalogEndpoint,
+  DispatcherCatalogFile,
+  DispatcherCatalogProject,
+} from '../../model/dispatcher-catalog';
+import { fetchDispatcherExposedEndpoints } from '../storage-client/fetch-dispatcher-exposed-endpoints';
+import { withEphemeralStorageForCatalog } from '../worker-lifecycle/with-ephemeral-storage-for-catalog';
+import { setDispatcherCatalogSnapshot } from './dispatcher-catalog-snapshot';
+import { loadDispatcherProjectsMetadata } from './load-dispatcher-projects-metadata';
+import { validateProjectEndpointsAgainstRegistry } from './validate-catalog-endpoints-against-registry';
+
+const mapRowToCatalogEndpoint = (row: {
+  id: string;
+  serviceId: string;
+  method: DispatcherCatalogEndpoint['method'];
+  path: string;
+  summary: string;
+  requiresBody: boolean;
+}): DispatcherCatalogEndpoint => ({
+  id: row.id,
+  serviceId: row.serviceId,
+  method: row.method,
+  path: row.path,
+  summary: row.summary,
+  requiresBody: row.requiresBody ? true : undefined,
+});
+
+const buildCatalogFromStorage = async (): Promise<DispatcherCatalogFile> =>
+  withEphemeralStorageForCatalog(async () => {
+    const metadata = loadDispatcherProjectsMetadata();
+    const projects: DispatcherCatalogProject[] = [];
+
+    for (const projectMeta of metadata.projects) {
+      const rows = await fetchDispatcherExposedEndpoints(projectMeta.id, { enabledOnly: true });
+      const project: DispatcherCatalogProject = {
+        ...projectMeta,
+        endpoints: rows.map(mapRowToCatalogEndpoint),
+      };
+      validateProjectEndpointsAgainstRegistry(project);
+      projects.push(project);
+    }
+
+    return { version: 1, projects };
+  });
+
+/**
+ * Loads project metadata and enabled exposed endpoints from storage HTTP into memory.
+ */
+export const loadDispatcherCatalog = async (): Promise<void> => {
+  const catalog = await buildCatalogFromStorage();
+  setDispatcherCatalogSnapshot(catalog);
+  const endpointCount = catalog.projects.reduce((sum, p) => sum + p.endpoints.length, 0);
+  console.log(
+    `✅ [catalog] Loaded ${catalog.projects.length} project(s), ${endpointCount} exposed endpoint(s) from storage`,
+  );
+};
+
+/**
+ * Reloads the in-memory catalog snapshot after admin mutations.
+ */
+export const reloadDispatcherCatalog = loadDispatcherCatalog;

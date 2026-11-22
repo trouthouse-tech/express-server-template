@@ -1,0 +1,59 @@
+import { execSync } from 'child_process';
+
+/** Process group id for a pid, or null when it can't be read (process gone, ps unavailable). */
+const readProcessGroupId = (pid: number): number | null => {
+  try {
+    const pgid = Number(execSync(`ps -o pgid= -p ${pid}`, { encoding: 'utf8' }).trim());
+    return Number.isFinite(pgid) && pgid > 1 ? pgid : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * SIGTERM to process(es) listening on the upstream URL port (untracked orphan workers).
+ *
+ * Signals the listener's whole process group, not just the listener. Workers are spawned as
+ * `zsh -lc … npm run dev` (detached, so zsh leads its own group) and `npm run dev` runs nodemon,
+ * which runs the server. Killing only the listening server left zsh + npm + nodemon running
+ * forever ("waiting for file changes"), leaking one group per stop. Never signals the
+ * dispatcher's own group.
+ */
+export const killProcessListeningOnUrl = (upstreamBaseUrl: string): void => {
+  try {
+    const url = new URL(upstreamBaseUrl);
+    const port = url.port || (url.protocol === 'https:' ? '443' : '80');
+    const output = execSync(`lsof -ti tcp:${port} -sTCP:LISTEN`, { encoding: 'utf8' }).trim();
+    if (!output) {
+      return;
+    }
+    const ownGroupId = readProcessGroupId(process.pid);
+    const signaledGroups = new Set<number>();
+    for (const pidText of output.split('\n')) {
+      const pid = Number(pidText);
+      if (!Number.isFinite(pid) || pid === process.pid) {
+        continue;
+      }
+      const groupId = readProcessGroupId(pid);
+      try {
+        if (groupId !== null && groupId !== ownGroupId) {
+          if (signaledGroups.has(groupId)) {
+            continue;
+          }
+          process.kill(-groupId, 'SIGTERM');
+          signaledGroups.add(groupId);
+          console.log(
+            `📤 [lifecycle] SIGTERM orphan listener pid ${pid} on port ${port} (process group ${groupId})`,
+          );
+        } else {
+          process.kill(pid, 'SIGTERM');
+          console.log(`📤 [lifecycle] SIGTERM orphan listener pid ${pid} on port ${port}`);
+        }
+      } catch {
+        // already exited
+      }
+    }
+  } catch {
+    // lsof found nothing or command unavailable
+  }
+};

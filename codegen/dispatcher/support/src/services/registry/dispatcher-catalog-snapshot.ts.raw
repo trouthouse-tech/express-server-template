@@ -1,0 +1,44 @@
+import type { DispatcherCatalogFile } from '../../model/dispatcher-catalog';
+
+let catalogSnapshot: DispatcherCatalogFile | null = null;
+
+/**
+ * Stores the loaded dispatcher catalog snapshot.
+ */
+export const setDispatcherCatalogSnapshot = (catalog: DispatcherCatalogFile): void => {
+  catalogSnapshot = catalog;
+};
+
+/**
+ * True after the first successful load from storage (or manual set).
+ */
+export const isDispatcherCatalogLoaded = (): boolean => catalogSnapshot !== null;
+
+/**
+ * Returns the loaded dispatcher catalog snapshot.
+ */
+export const getDispatcherCatalogSnapshot = (): DispatcherCatalogFile => {
+  if (!catalogSnapshot) {
+    throw new Error('Dispatcher catalog not loaded');
+  }
+  return catalogSnapshot;
+};
+
+/**
+ * Returns true if a gateway path is declared on any catalog endpoint.
+ */
+export const isCatalogGatewayPathAllowed = (requestPath: string): boolean => {
+  if (!catalogSnapshot) {
+    return false;
+  }
+  const catalog = catalogSnapshot;
+  const pathOnly = requestPath.split('?')[0];
+  for (const project of catalog.projects) {
+    for (const endpoint of project.endpoints) {
+      if (endpoint.path === pathOnly) {
+        return true;
+      }
+    }
+  }
+  return false;
+};

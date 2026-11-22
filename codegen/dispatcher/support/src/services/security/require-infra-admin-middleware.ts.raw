@@ -1,0 +1,27 @@
+import type { NextFunction, Request, Response } from 'express';
+import { readSingleHeader } from '../../utils/http/read-single-header';
+import { safeEqualSecret } from '../../utils/http/safe-equal-secret';
+import { readInfraAdminSecret } from './read-infra-admin-secret';
+
+const ADMIN_HEADER = 'x-dispatcher-admin-secret';
+
+/**
+ * Protects /api/dispatcher infra routes (except public health).
+ */
+export const requireInfraAdminMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  const expected = readInfraAdminSecret();
+  if (!expected) {
+    res.status(500).json({ success: false, error: 'Infra admin auth is not configured' });
+    return;
+  }
+  const provided = readSingleHeader(req.headers[ADMIN_HEADER]);
+  if (!provided || !safeEqualSecret(provided, expected)) {
+    res.status(401).json({ success: false, error: 'Unauthorized' });
+    return;
+  }
+  next();
+};

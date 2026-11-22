@@ -1,0 +1,41 @@
+import { getRegistrySnapshot } from '../registry/registry-snapshot';
+import { unpinWorker } from '../worker-lifecycle/ephemeral-worker-hold';
+import { stopService } from '../worker-lifecycle/stop-service';
+
+const collectDependents = (serviceId: string): string[] => {
+  const snapshot = getRegistrySnapshot();
+  const result: string[] = [];
+  const visit = (target: string): void => {
+    for (const service of snapshot.file.services) {
+      if (service.dependsOn?.includes(target) && !result.includes(service.id)) {
+        result.push(service.id);
+        visit(service.id);
+      }
+    }
+  };
+  visit(serviceId);
+  return result;
+};
+
+/**
+ * Admin stop — stops dependents first, then the target worker.
+ */
+export const processStopService = async (
+  serviceId: string,
+): Promise<{ runtimeStatus: string; stoppedDependents: string[] }> => {
+  const snapshot = getRegistrySnapshot();
+  if (!snapshot.servicesById.has(serviceId)) {
+    throw new Error(`Unknown service: ${serviceId}`);
+  }
+
+  const dependents = collectDependents(serviceId);
+  const stoppedDependents: string[] = [];
+  for (const dependentId of dependents) {
+    unpinWorker(dependentId);
+    await stopService(dependentId);
+    stoppedDependents.push(dependentId);
+  }
+  unpinWorker(serviceId);
+  await stopService(serviceId);
+  return { runtimeStatus: 'stopped', stoppedDependents };
+};

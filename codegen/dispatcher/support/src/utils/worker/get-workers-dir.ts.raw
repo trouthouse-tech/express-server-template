@@ -1,0 +1,9 @@
+import path from 'node:path';
+
+export const getWorkersDir = (): string => path.join(process.cwd(), 'data', 'workers');
+
+export const workerLogPath = (serviceId: string): string =>
+  path.join(getWorkersDir(), `${serviceId}.log`);
+
+export const workerManifestPath = (serviceId: string): string =>
+  path.join(getWorkersDir(), `${serviceId}.worker-manifest`);

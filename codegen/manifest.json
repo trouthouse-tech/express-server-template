@@ -214,6 +214,1239 @@
           }
         }
       ]
+    },
+    "dispatcher": {
+      "files": [
+        {
+          "id": "support:.gitignore",
+          "path": ".gitignore",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/support/.gitignore.raw",
+          "raw": true
+        },
+        {
+          "id": "support:.nvmrc",
+          "path": ".nvmrc",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/.nvmrc.raw",
+          "raw": true
+        },
+        {
+          "id": "support:dispatcher.services.schema.json",
+          "path": "dispatcher.services.schema.json",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/dispatcher.services.schema.json.raw",
+          "raw": true
+        },
+        {
+          "id": "support:index.ts",
+          "path": "index.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/support/index.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:nixpacks.toml",
+          "path": "nixpacks.toml",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/nixpacks.toml.raw",
+          "raw": true
+        },
+        {
+          "id": "support:nodemon.json",
+          "path": "nodemon.json",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/nodemon.json.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/dispatcher-api-types.ts",
+          "path": "src/model/dispatcher-api-types.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/dispatcher-api-types.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/dispatcher-catalog.ts",
+          "path": "src/model/dispatcher-catalog.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/dispatcher-catalog.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/dispatcher-exposed-endpoint.ts",
+          "path": "src/model/dispatcher-exposed-endpoint.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/dispatcher-exposed-endpoint.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/registered-service.ts",
+          "path": "src/model/registered-service.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/registered-service.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/registry-file.ts",
+          "path": "src/model/registry-file.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/registry-file.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/service-runtime-status.ts",
+          "path": "src/model/service-runtime-status.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/service-runtime-status.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/service-spawn-config.ts",
+          "path": "src/model/service-spawn-config.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/service-spawn-config.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/upstream-auth.ts",
+          "path": "src/model/upstream-auth.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/upstream-auth.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/model/worker-manifest.ts",
+          "path": "src/model/worker-manifest.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/model/worker-manifest.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/audit/write-access-audit-record.ts",
+          "path": "src/services/audit/write-access-audit-record.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/audit/write-access-audit-record.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/create-dispatcher-router.ts",
+          "path": "src/services/dispatcher/create-dispatcher-router.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/create-dispatcher-router.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-create-catalog-endpoint.ts",
+          "path": "src/services/dispatcher/process-create-catalog-endpoint.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-create-catalog-endpoint.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-delete-catalog-endpoint.ts",
+          "path": "src/services/dispatcher/process-delete-catalog-endpoint.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-delete-catalog-endpoint.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-get-catalog.ts",
+          "path": "src/services/dispatcher/process-get-catalog.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-get-catalog.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-list-catalog-endpoints.ts",
+          "path": "src/services/dispatcher/process-list-catalog-endpoints.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-list-catalog-endpoints.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-list-services.ts",
+          "path": "src/services/dispatcher/process-list-services.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-list-services.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-start-service.ts",
+          "path": "src/services/dispatcher/process-start-service.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-start-service.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-stop-all-local-workers.ts",
+          "path": "src/services/dispatcher/process-stop-all-local-workers.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-stop-all-local-workers.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-stop-service.ts",
+          "path": "src/services/dispatcher/process-stop-service.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-stop-service.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/process-update-catalog-endpoint.ts",
+          "path": "src/services/dispatcher/process-update-catalog-endpoint.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/process-update-catalog-endpoint.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/delete-catalog-endpoint-handler.ts",
+          "path": "src/services/dispatcher/routes/delete-catalog-endpoint-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/delete-catalog-endpoint-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/get-catalog-endpoints-handler.ts",
+          "path": "src/services/dispatcher/routes/get-catalog-endpoints-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/get-catalog-endpoints-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/get-catalog-handler.ts",
+          "path": "src/services/dispatcher/routes/get-catalog-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/get-catalog-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/get-dispatcher-health-handler.ts",
+          "path": "src/services/dispatcher/routes/get-dispatcher-health-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/get-dispatcher-health-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/get-services-handler.ts",
+          "path": "src/services/dispatcher/routes/get-services-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/get-services-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/patch-catalog-endpoint-handler.ts",
+          "path": "src/services/dispatcher/routes/patch-catalog-endpoint-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/patch-catalog-endpoint-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/post-catalog-endpoint-handler.ts",
+          "path": "src/services/dispatcher/routes/post-catalog-endpoint-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/post-catalog-endpoint-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/post-local-stop-all-workers-handler.ts",
+          "path": "src/services/dispatcher/routes/post-local-stop-all-workers-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/post-local-stop-all-workers-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/post-service-start-handler.ts",
+          "path": "src/services/dispatcher/routes/post-service-start-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/post-service-start-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/dispatcher/routes/post-service-stop-handler.ts",
+          "path": "src/services/dispatcher/routes/post-service-stop-handler.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/dispatcher/routes/post-service-stop-handler.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/health/create-health-router.ts",
+          "path": "src/services/health/create-health-router.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/health/create-health-router.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/health/index.ts",
+          "path": "src/services/health/index.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/health/index.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/main-gateway-session-report/config.ts",
+          "path": "src/services/main-gateway-session-report/config.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/main-gateway-session-report/config.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/main-gateway-session-report/map-registry-service-id-to-tier.ts",
+          "path": "src/services/main-gateway-session-report/map-registry-service-id-to-tier.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/main-gateway-session-report/map-registry-service-id-to-tier.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/main-gateway-session-report/post-main-gateway-session-request.ts",
+          "path": "src/services/main-gateway-session-report/post-main-gateway-session-request.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/main-gateway-session-report/post-main-gateway-session-request.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/main-gateway-session-report/report-session-for-service.ts",
+          "path": "src/services/main-gateway-session-report/report-session-for-service.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/main-gateway-session-report/report-session-for-service.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/middleware/attach-request-id-middleware.ts",
+          "path": "src/services/middleware/attach-request-id-middleware.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/middleware/attach-request-id-middleware.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/middleware/index.ts",
+          "path": "src/services/middleware/index.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/middleware/index.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/middleware/setup-early-middleware.ts",
+          "path": "src/services/middleware/setup-early-middleware.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/support/src/services/middleware/setup-early-middleware.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/middleware/setup-error-handling.ts",
+          "path": "src/services/middleware/setup-error-handling.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/middleware/setup-error-handling.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/proxy/build-upstream-headers.ts",
+          "path": "src/services/proxy/build-upstream-headers.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/proxy/build-upstream-headers.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/proxy/build-upstream-url.ts",
+          "path": "src/services/proxy/build-upstream-url.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/proxy/build-upstream-url.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/proxy/create-proxy-router.ts",
+          "path": "src/services/proxy/create-proxy-router.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/proxy/create-proxy-router.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/proxy/format-service-unavailable-error.ts",
+          "path": "src/services/proxy/format-service-unavailable-error.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/proxy/format-service-unavailable-error.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/proxy/format-upstream-unreachable-error.ts",
+          "path": "src/services/proxy/format-upstream-unreachable-error.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/proxy/format-upstream-unreachable-error.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/proxy/process-proxy-request.ts",
+          "path": "src/services/proxy/process-proxy-request.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/proxy/process-proxy-request.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/build-path-matcher.ts",
+          "path": "src/services/registry/build-path-matcher.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/build-path-matcher.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/dispatcher-catalog-snapshot.ts",
+          "path": "src/services/registry/dispatcher-catalog-snapshot.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/dispatcher-catalog-snapshot.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/ensure-dispatcher-catalog-loaded.ts",
+          "path": "src/services/registry/ensure-dispatcher-catalog-loaded.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/ensure-dispatcher-catalog-loaded.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/load-dispatcher-catalog.ts",
+          "path": "src/services/registry/load-dispatcher-catalog.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/load-dispatcher-catalog.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/load-dispatcher-projects-metadata.ts",
+          "path": "src/services/registry/load-dispatcher-projects-metadata.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/load-dispatcher-projects-metadata.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/load-registry.ts",
+          "path": "src/services/registry/load-registry.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/load-registry.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/registry-snapshot.ts",
+          "path": "src/services/registry/registry-snapshot.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/registry-snapshot.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/validate-catalog-endpoints-against-registry.ts",
+          "path": "src/services/registry/validate-catalog-endpoints-against-registry.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/validate-catalog-endpoints-against-registry.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/registry/validate-registry.ts",
+          "path": "src/services/registry/validate-registry.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/registry/validate-registry.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/security/assert-client-ip-allowed.ts",
+          "path": "src/services/security/assert-client-ip-allowed.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/security/assert-client-ip-allowed.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/security/process-validate-production-config.ts",
+          "path": "src/services/security/process-validate-production-config.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/security/process-validate-production-config.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/security/rate-limit-store.ts",
+          "path": "src/services/security/rate-limit-store.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/security/rate-limit-store.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/security/read-gate-config.ts",
+          "path": "src/services/security/read-gate-config.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/security/read-gate-config.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/security/read-infra-admin-secret.ts",
+          "path": "src/services/security/read-infra-admin-secret.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/security/read-infra-admin-secret.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/security/require-infra-admin-middleware.ts",
+          "path": "src/services/security/require-infra-admin-middleware.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/security/require-infra-admin-middleware.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/security/require-loopback-client-middleware.ts",
+          "path": "src/services/security/require-loopback-client-middleware.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/security/require-loopback-client-middleware.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/server/index.ts",
+          "path": "src/services/server/index.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/server/index.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/server/start-server.ts",
+          "path": "src/services/server/start-server.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/support/src/services/server/start-server.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/storage-client/create-dispatcher-exposed-endpoint-via-storage.ts",
+          "path": "src/services/storage-client/create-dispatcher-exposed-endpoint-via-storage.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/storage-client/create-dispatcher-exposed-endpoint-via-storage.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/storage-client/delete-dispatcher-exposed-endpoint-via-storage.ts",
+          "path": "src/services/storage-client/delete-dispatcher-exposed-endpoint-via-storage.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/storage-client/delete-dispatcher-exposed-endpoint-via-storage.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/storage-client/fetch-dispatcher-exposed-endpoints.ts",
+          "path": "src/services/storage-client/fetch-dispatcher-exposed-endpoints.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/storage-client/fetch-dispatcher-exposed-endpoints.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/storage-client/read-storage-dispatcher-secret.ts",
+          "path": "src/services/storage-client/read-storage-dispatcher-secret.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/storage-client/read-storage-dispatcher-secret.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/storage-client/read-storage-service.ts",
+          "path": "src/services/storage-client/read-storage-service.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/storage-client/read-storage-service.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/storage-client/request-storage-api.ts",
+          "path": "src/services/storage-client/request-storage-api.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/storage-client/request-storage-api.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/storage-client/update-dispatcher-exposed-endpoint-via-storage.ts",
+          "path": "src/services/storage-client/update-dispatcher-exposed-endpoint-via-storage.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/storage-client/update-dispatcher-exposed-endpoint-via-storage.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/ensure-service-ready.ts",
+          "path": "src/services/worker-lifecycle/ensure-service-ready.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/ensure-service-ready.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/ephemeral-worker-hold.ts",
+          "path": "src/services/worker-lifecycle/ephemeral-worker-hold.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/ephemeral-worker-hold.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/probe-service-health.ts",
+          "path": "src/services/worker-lifecycle/probe-service-health.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/probe-service-health.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/resolve-listed-runtime-phase.ts",
+          "path": "src/services/worker-lifecycle/resolve-listed-runtime-phase.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/resolve-listed-runtime-phase.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/service-runtime-store.ts",
+          "path": "src/services/worker-lifecycle/service-runtime-store.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/service-runtime-store.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/spawn-service.ts",
+          "path": "src/services/worker-lifecycle/spawn-service.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/spawn-service.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/stop-service.ts",
+          "path": "src/services/worker-lifecycle/stop-service.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/stop-service.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/with-ephemeral-storage-for-catalog.ts",
+          "path": "src/services/worker-lifecycle/with-ephemeral-storage-for-catalog.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/with-ephemeral-storage-for-catalog.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/services/worker-lifecycle/worker-manifest-io.ts",
+          "path": "src/services/worker-lifecycle/worker-manifest-io.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/services/worker-lifecycle/worker-manifest-io.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/http/parse-allowed-client-ips.ts",
+          "path": "src/utils/http/parse-allowed-client-ips.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/http/parse-allowed-client-ips.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/http/parse-cors-origins.ts",
+          "path": "src/utils/http/parse-cors-origins.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/http/parse-cors-origins.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/http/read-single-header.ts",
+          "path": "src/utils/http/read-single-header.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/http/read-single-header.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/http/safe-equal-secret.ts",
+          "path": "src/utils/http/safe-equal-secret.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/http/safe-equal-secret.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/spawn/assert-spawn-cwd-allowed.ts",
+          "path": "src/utils/spawn/assert-spawn-cwd-allowed.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/spawn/assert-spawn-cwd-allowed.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/spawn/build-spawn-shell-command.ts",
+          "path": "src/utils/spawn/build-spawn-shell-command.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/spawn/build-spawn-shell-command.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/storage/format-storage-catalog-error.ts",
+          "path": "src/utils/storage/format-storage-catalog-error.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/storage/format-storage-catalog-error.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/url/assert-loopback-upstream-url.ts",
+          "path": "src/utils/url/assert-loopback-upstream-url.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/url/assert-loopback-upstream-url.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/worker/get-workers-dir.ts",
+          "path": "src/utils/worker/get-workers-dir.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/worker/get-workers-dir.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/worker/kill-process-listening-on-url.ts",
+          "path": "src/utils/worker/kill-process-listening-on-url.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/worker/kill-process-listening-on-url.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/worker/read-stop-storage-after-catalog-config.ts",
+          "path": "src/utils/worker/read-stop-storage-after-catalog-config.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/worker/read-stop-storage-after-catalog-config.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/worker/read-stop-workers-after-proxy-config.ts",
+          "path": "src/utils/worker/read-stop-workers-after-proxy-config.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/worker/read-stop-workers-after-proxy-config.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/worker/read-worker-log-tail.ts",
+          "path": "src/utils/worker/read-worker-log-tail.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/worker/read-worker-log-tail.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:src/utils/worker/signal-worker-pid.ts",
+          "path": "src/utils/worker/signal-worker-pid.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/src/utils/worker/signal-worker-pid.ts.raw",
+          "raw": true
+        },
+        {
+          "id": "support:tsconfig.json",
+          "path": "tsconfig.json",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "if_missing",
+          "template": "dispatcher/support/tsconfig.json.raw",
+          "raw": true
+        },
+        {
+          "id": "project-config",
+          "path": "src/config/project.ts",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/project.ts.eta",
+          "convention_keys": [
+            "dispatcher.ids.naming",
+            "dispatcher.ports.loopback_unique"
+          ]
+        },
+        {
+          "id": "services-registry",
+          "path": "dispatcher.services.json",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/dispatcher.services.json.eta",
+          "convention_keys": [
+            "dispatcher.registry.storage_service",
+            "dispatcher.registry.api_service",
+            "dispatcher.registry.minimal_allowlist",
+            "dispatcher.spawn.cwd_under_root"
+          ]
+        },
+        {
+          "id": "projects-file",
+          "path": "dispatcher.projects.json",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/dispatcher.projects.json.eta",
+          "convention_keys": [
+            "dispatcher.ids.naming"
+          ]
+        },
+        {
+          "id": "catalog-file",
+          "path": "dispatcher.catalog.json",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/dispatcher.catalog.json.eta",
+          "convention_keys": [
+            "dispatcher.catalog.storage_owned"
+          ]
+        },
+        {
+          "id": "env-example",
+          "path": ".env.example",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/env.example.eta",
+          "convention_keys": [
+            "dispatcher.secrets.env_names"
+          ]
+        },
+        {
+          "id": "package",
+          "path": "package.json",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/package.json.eta",
+          "convention_keys": []
+        },
+        {
+          "id": "smoke",
+          "path": "scripts/smoke.sh",
+          "each": "once",
+          "roles": [
+            "dispatcher"
+          ],
+          "mode": "write",
+          "template": "dispatcher/smoke.sh.eta",
+          "convention_keys": []
+        },
+        {
+          "id": "gateway-registration",
+          "path": "migrations/<%= String(it.migrations.next).padStart(3, '0') %>_<%= it.dispatcher.session_slug %>_gateway.sql",
+          "each": "once",
+          "roles": [
+            "gateway"
+          ],
+          "mode": "write",
+          "template": "dispatcher/gateway/registration.sql.eta",
+          "convention_keys": [
+            "dispatcher.gateway.registration_migration",
+            "dispatcher.secrets.env_names"
+          ]
+        },
+        {
+          "id": "gateway-sessions",
+          "path": "migrations/<%= String(it.migrations.next + 1).padStart(3, '0') %>_<%= it.dispatcher.session_slug %>_worker_sessions.sql",
+          "each": "once",
+          "roles": [
+            "gateway"
+          ],
+          "mode": "write",
+          "template": "dispatcher/gateway/sessions.sql.eta",
+          "convention_keys": [
+            "dispatcher.gateway.session_tables"
+          ]
+        }
+      ]
     }
   }
 }

@@ -1,0 +1,25 @@
+import type {
+  DispatcherExposedEndpoint,
+  UpdateDispatcherExposedEndpointInput,
+} from '../../model/dispatcher-exposed-endpoint';
+import { requestStorageApi } from './request-storage-api';
+
+/**
+ * Updates an exposed endpoint row via storage express.
+ */
+export const updateDispatcherExposedEndpointViaStorage = async (
+  id: string,
+  input: UpdateDispatcherExposedEndpointInput,
+): Promise<DispatcherExposedEndpoint | null> => {
+  const result = await requestStorageApi<{ endpoint: DispatcherExposedEndpoint }>(
+    `/api/storage/dispatcher-exposed-endpoints/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(input) },
+  );
+  if (!result.ok) {
+    if (result.status === 404) {
+      return null;
+    }
+    throw new Error(result.error);
+  }
+  return result.data.endpoint;
+};

@@ -1,0 +1,30 @@
+import type { ServiceRuntimePhase } from '../../model/service-runtime-status';
+
+/**
+ * Combines in-memory gateway phase with upstream health probe for list APIs.
+ * User-initiated stop must stay `stopped` even when an orphan process still answers health.
+ */
+export const resolveListedRuntimePhase = (
+  storedPhase: ServiceRuntimePhase,
+  probeHealthy: boolean,
+): ServiceRuntimePhase => {
+  if (storedPhase === 'stopped') {
+    return 'stopped';
+  }
+  if (storedPhase === 'starting') {
+    return probeHealthy ? 'healthy' : 'starting';
+  }
+  if (storedPhase === 'failed') {
+    return probeHealthy ? 'healthy' : 'failed';
+  }
+  if (probeHealthy) {
+    return 'healthy';
+  }
+  if (storedPhase === 'unknown') {
+    return 'stopped';
+  }
+  if (storedPhase === 'healthy' || storedPhase === 'starting') {
+    return 'stopped';
+  }
+  return storedPhase;
+};

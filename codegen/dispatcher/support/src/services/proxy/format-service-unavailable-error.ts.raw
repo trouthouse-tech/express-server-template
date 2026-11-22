@@ -1,0 +1,17 @@
+import type { RegisteredService } from '../../model/registered-service';
+import { ServiceUnavailableError } from '../worker-lifecycle/ensure-service-ready';
+
+/**
+ * Readable 503 error for ensureServiceReady failures.
+ */
+export const formatServiceUnavailableError = (
+  service: RegisteredService,
+  error: unknown,
+): string => {
+  const displayName = service.displayName ?? service.id;
+  if (error instanceof ServiceUnavailableError) {
+    return `${displayName}: ${error.message}`;
+  }
+  const message = error instanceof Error ? error.message : 'Service unavailable';
+  return `${displayName}: ${message}`;
+};

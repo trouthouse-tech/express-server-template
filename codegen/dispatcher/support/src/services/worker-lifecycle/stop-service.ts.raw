@@ -1,0 +1,85 @@
+import type { RegisteredService } from '../../model/registered-service';
+import { getRegistrySnapshot } from '../registry/registry-snapshot';
+import { probeServiceHealth } from './probe-service-health';
+import { setRuntimeStatus } from './service-runtime-store';
+import { clearWorkerManifest, readWorkerManifest } from './worker-manifest-io';
+import { killProcessListeningOnUrl } from '../../utils/worker/kill-process-listening-on-url';
+import { reportSessionEndForService } from '../main-gateway-session-report/report-session-for-service';
+import { isWorkerPidNotFound, signalWorkerPid } from '../../utils/worker/signal-worker-pid';
+
+const stopGraceMs = (): number => Number(process.env.DISPATCHER_STOP_GRACE_MS ?? 5000);
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const stopInFlight = new Map<string, Promise<void>>();
+
+const stopUntrackedListenerIfStillHealthy = async (service: RegisteredService): Promise<void> => {
+  if (!(await probeServiceHealth(service))) {
+    return;
+  }
+  killProcessListeningOnUrl(service.upstreamBaseUrl);
+  await sleep(500);
+};
+
+const stopServiceOnce = async (serviceId: string): Promise<void> => {
+  const snapshot = getRegistrySnapshot();
+  if (!snapshot.servicesById.has(serviceId)) {
+    throw new Error(`Unknown service: ${serviceId}`);
+  }
+
+  const service = snapshot.servicesById.get(serviceId);
+  if (!service) {
+    throw new Error(`Unknown service: ${serviceId}`);
+  }
+
+  const manifest = readWorkerManifest(serviceId);
+  if (!manifest?.pid) {
+    await stopUntrackedListenerIfStillHealthy(service);
+    setRuntimeStatus(serviceId, 'stopped', { pid: null });
+    await reportSessionEndForService(serviceId);
+    return;
+  }
+
+  try {
+    signalWorkerPid(manifest.pid, 'SIGTERM');
+    await sleep(stopGraceMs());
+    try {
+      process.kill(manifest.pid, 0);
+      signalWorkerPid(manifest.pid, 'SIGKILL');
+    } catch {
+      // already exited
+    }
+    console.log(`📤 [lifecycle] Stopped ${serviceId} pid ${manifest.pid}`);
+  } catch (error) {
+    if (isWorkerPidNotFound(error)) {
+      console.log(
+        `📤 [lifecycle] ${serviceId} tracked pid ${manifest.pid} already exited; cleaning listener`,
+      );
+    } else {
+      console.error(`❌ [lifecycle] Stop failed for ${serviceId}:`, error);
+    }
+  } finally {
+    clearWorkerManifest(serviceId);
+    await stopUntrackedListenerIfStillHealthy(service);
+    setRuntimeStatus(serviceId, 'stopped', { pid: null });
+    await reportSessionEndForService(serviceId);
+  }
+};
+
+/**
+ * Stops tracked worker process for a service.
+ */
+export const stopService = async (serviceId: string): Promise<void> => {
+  const existing = stopInFlight.get(serviceId);
+  if (existing) {
+    return existing;
+  }
+  const promise = stopServiceOnce(serviceId).finally(() => {
+    stopInFlight.delete(serviceId);
+  });
+  stopInFlight.set(serviceId, promise);
+  return promise;
+};

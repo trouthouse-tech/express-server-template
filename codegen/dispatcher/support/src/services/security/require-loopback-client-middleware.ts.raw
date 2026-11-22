@@ -1,0 +1,27 @@
+import type { NextFunction, Request, Response } from 'express';
+
+const isLoopbackAddress = (remoteAddress: string | undefined): boolean => {
+  if (!remoteAddress) {
+    return false;
+  }
+  return (
+    remoteAddress === '127.0.0.1' ||
+    remoteAddress === '::1' ||
+    remoteAddress === '::ffff:127.0.0.1'
+  );
+};
+
+/**
+ * Homelab only: allows studio main gateway (same machine) to stop workers without infra secrets.
+ */
+export const requireLoopbackClientMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  if (!isLoopbackAddress(req.socket.remoteAddress)) {
+    res.status(403).json({ success: false, error: 'Local loopback only' });
+    return;
+  }
+  next();
+};

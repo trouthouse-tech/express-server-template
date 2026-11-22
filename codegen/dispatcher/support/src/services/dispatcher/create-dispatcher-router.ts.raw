@@ -1,0 +1,37 @@
+import { Router } from 'express';
+import { requireInfraAdminMiddleware } from '../security/require-infra-admin-middleware';
+import { getDispatcherHealthHandler } from './routes/get-dispatcher-health-handler';
+import { getServicesHandler } from './routes/get-services-handler';
+import { postServiceStartHandler } from './routes/post-service-start-handler';
+import { postServiceStopHandler } from './routes/post-service-stop-handler';
+import { getCatalogHandler } from './routes/get-catalog-handler';
+import { getCatalogEndpointsHandler } from './routes/get-catalog-endpoints-handler';
+import { postCatalogEndpointHandler } from './routes/post-catalog-endpoint-handler';
+import { patchCatalogEndpointHandler } from './routes/patch-catalog-endpoint-handler';
+import { deleteCatalogEndpointHandler } from './routes/delete-catalog-endpoint-handler';
+import { requireLoopbackClientMiddleware } from '../security/require-loopback-client-middleware';
+import { postLocalStopAllWorkersHandler } from './routes/post-local-stop-all-workers-handler';
+
+/**
+ * Infra control plane routes for the project dispatcher.
+ */
+export const createDispatcherRouter = (): Router => {
+  const router = Router();
+
+  router.get('/health', getDispatcherHealthHandler);
+  router.post(
+    '/local/stop-all-workers',
+    requireLoopbackClientMiddleware,
+    postLocalStopAllWorkersHandler,
+  );
+  router.get('/catalog/endpoints', requireInfraAdminMiddleware, getCatalogEndpointsHandler);
+  router.post('/catalog/endpoints', requireInfraAdminMiddleware, postCatalogEndpointHandler);
+  router.patch('/catalog/endpoints/:id', requireInfraAdminMiddleware, patchCatalogEndpointHandler);
+  router.delete('/catalog/endpoints/:id', requireInfraAdminMiddleware, deleteCatalogEndpointHandler);
+  router.get('/catalog', requireInfraAdminMiddleware, getCatalogHandler);
+  router.get('/services', requireInfraAdminMiddleware, getServicesHandler);
+  router.post('/services/:id/start', requireInfraAdminMiddleware, postServiceStartHandler);
+  router.post('/services/:id/stop', requireInfraAdminMiddleware, postServiceStopHandler);
+
+  return router;
+};

@@ -1,0 +1,5 @@
+{
+  "watch": ["src", "index.ts", "dispatcher.services.json", "dispatcher.catalog.json"],
+  "ignore": ["data/**", "node_modules/**", ".cursor/**"],
+  "ext": "ts"
+}

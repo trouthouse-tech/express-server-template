@@ -1,0 +1,5 @@
+/**
+ * When true (default), workers spawned for a gate proxy request are stopped when the response finishes.
+ */
+export const readStopWorkersAfterProxy = (): boolean =>
+  process.env.DISPATCHER_STOP_WORKERS_AFTER_PROXY !== 'false';

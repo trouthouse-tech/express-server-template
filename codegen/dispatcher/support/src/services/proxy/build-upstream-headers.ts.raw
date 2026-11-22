@@ -1,0 +1,79 @@
+import type { IncomingHttpHeaders } from 'node:http';
+import type { RegisteredService } from '../../model/registered-service';
+import { readSingleHeader } from '../../utils/http/read-single-header';
+
+const HOP_BY_HOP = new Set([
+  'connection',
+  'keep-alive',
+  'transfer-encoding',
+  'te',
+  'trailer',
+  'upgrade',
+  'host',
+  'x-dispatcher-gate-secret',
+  'x-dispatcher-admin-secret',
+]);
+
+const FORWARD_ALLOW = new Set([
+  'content-type',
+  'content-length',
+  'accept',
+  'accept-encoding',
+  'authorization',
+  'x-storage-secret',
+]);
+
+const normalizeHeaderName = (name: string): string => name.toLowerCase();
+
+export const buildUpstreamHeadersForProbe = (
+  service: RegisteredService,
+): Record<string, string> => {
+  const headers: Record<string, string> = { accept: 'application/json' };
+  const auth = service.upstreamAuth;
+  if (auth.mode === 'inject-from-env') {
+    const value = process.env[auth.envVar]?.trim();
+    if (value) {
+      headers[auth.header] = value;
+    }
+  }
+  return headers;
+};
+
+/**
+ * Builds headers to send upstream from incoming request and upstreamAuth policy.
+ */
+export const buildUpstreamHeaders = (
+  service: RegisteredService,
+  incoming: IncomingHttpHeaders,
+): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(incoming)) {
+    const lower = normalizeHeaderName(key);
+    if (HOP_BY_HOP.has(lower)) {
+      continue;
+    }
+    if (!FORWARD_ALLOW.has(lower)) {
+      continue;
+    }
+    const single = readSingleHeader(value);
+    if (single) {
+      out[lower] = single;
+    }
+  }
+
+  const auth = service.upstreamAuth;
+  if (auth.mode === 'inject-from-env') {
+    delete out[normalizeHeaderName(auth.header)];
+    const value = process.env[auth.envVar]?.trim();
+    if (value) {
+      out[auth.header] = value;
+    }
+  } else if (auth.mode === 'forward-header') {
+    const provided = readSingleHeader(incoming[auth.header]);
+    if (provided) {
+      out[auth.header] = provided;
+    }
+  }
+
+  return out;
+};

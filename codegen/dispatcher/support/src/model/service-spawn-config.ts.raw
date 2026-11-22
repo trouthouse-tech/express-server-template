@@ -1,0 +1,6 @@
+export type ServiceSpawnConfig = {
+  cwd: string;
+  startCommand: string;
+  env?: Record<string, string>;
+  shellInit?: string;
+};

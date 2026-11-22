@@ -1,0 +1,29 @@
+import type { DispatcherExposedEndpoint } from '../../model/dispatcher-exposed-endpoint';
+import { formatStorageCatalogError } from '../../utils/storage/format-storage-catalog-error';
+import { requestStorageApi } from './request-storage-api';
+
+type FetchOptions = {
+  enabledOnly?: boolean;
+};
+
+/**
+ * Lists exposed endpoint rows from storage express.
+ */
+export const fetchDispatcherExposedEndpoints = async (
+  projectId: string,
+  options: FetchOptions = {},
+): Promise<DispatcherExposedEndpoint[]> => {
+  const enabledOnly = options.enabledOnly ?? true;
+  const query = new URLSearchParams({
+    projectId,
+    enabledOnly: enabledOnly ? 'true' : 'false',
+  });
+  const result = await requestStorageApi<{ endpoints: DispatcherExposedEndpoint[] }>(
+    `/api/storage/dispatcher-exposed-endpoints?${query.toString()}`,
+    { method: 'GET' },
+  );
+  if (!result.ok) {
+    throw new Error(formatStorageCatalogError(result.error));
+  }
+  return result.data.endpoints;
+};

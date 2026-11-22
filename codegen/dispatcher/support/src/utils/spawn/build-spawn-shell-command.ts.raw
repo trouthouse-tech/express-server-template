@@ -1,0 +1,72 @@
+import { API_SERVICE_ID, STORAGE_SERVICE_ID } from '../../config/project';
+import type { RegisteredService } from '../../model/registered-service';
+import { readStorageDispatcherSecret } from '../../services/storage-client/read-storage-dispatcher-secret';
+import { readStorageUpstreamBaseUrl } from '../../services/storage-client/read-storage-service';
+
+const ALLOWED_START = /^npm run (dev|start)$/;
+
+const escapeShellDoubleQuoted = (value: string): string => value.replace(/"/g, '\\"');
+
+/**
+ * Registry spawn env plus what the API needs to reach storage directly on loopback:
+ * CANONICAL_DATA_ACCESS_MODE=direct, STORAGE_URL and STORAGE_SECRET (never the gate secret).
+ */
+const resolveSpawnEnv = (service: RegisteredService): Record<string, string> => {
+  const env = { ...(service.spawn?.env ?? {}) };
+  if (service.id !== API_SERVICE_ID) {
+    return env;
+  }
+  env.CANONICAL_DATA_ACCESS_MODE = 'direct';
+  env.STORAGE_URL = env.STORAGE_URL ?? readStorageUpstreamBaseUrl();
+  try {
+    env.STORAGE_SECRET = env.STORAGE_SECRET ?? readStorageDispatcherSecret();
+  } catch (error) {
+    console.warn('⚠️ [spawn] API starts without STORAGE_SECRET:', error instanceof Error ? error.message : error);
+  }
+  return env;
+};
+
+/** Gate and gateway settings never reach the API; storage loads DATABASE_URL from its own .env. */
+const spawnEnvUnsetPrefix = (service: RegisteredService): string => {
+  if (service.id === API_SERVICE_ID) {
+    return 'unset DISPATCHER_GATE_SECRET MAIN_GATEWAY_URL MAIN_GATEWAY_PROJECT_ID && ';
+  }
+  if (service.id === STORAGE_SERVICE_ID) {
+    return 'unset DATABASE_URL && ';
+  }
+  return '';
+};
+
+/**
+ * Validates startCommand and builds zsh -lc command with log redirect.
+ */
+export const assertStartCommandAllowed = (startCommand: string): void => {
+  const trimmed = startCommand.trim();
+  if (!ALLOWED_START.test(trimmed)) {
+    throw new Error(`startCommand not allowed in v1: ${trimmed}`);
+  }
+};
+
+export const buildSpawnShellCommand = (
+  service: RegisteredService,
+  logPath: string,
+  shellInit: string | undefined,
+): string => {
+  if (!service.spawn) {
+    throw new Error('Service has no spawn config');
+  }
+  assertStartCommandAllowed(service.spawn.startCommand);
+  const init = shellInit?.trim() || service.spawn.shellInit?.trim();
+  const nvmPrefix = init ? `${init} && ` : '';
+  const envPairs = Object.entries(resolveSpawnEnv(service))
+    .map(([k, v]) => `export ${k}="${escapeShellDoubleQuoted(v)}"`)
+    .join(' && ');
+  const envPrefix = envPairs ? `${envPairs} && ` : '';
+  const runWorker =
+    `${nvmPrefix}${spawnEnvUnsetPrefix(service)}${envPrefix}cd "${service.spawn.cwd}" && ${service.spawn.startCommand}`;
+  return (
+    `exec >"${logPath}" 2>&1; ` +
+    `echo "[gateway-spawn] $(date -u +%Y-%m-%dT%H:%M:%SZ) starting ${service.id}"; ` +
+    `${runWorker} || echo "[gateway-spawn] exit=$?"`
+  );
+};
